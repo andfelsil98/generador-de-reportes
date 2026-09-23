@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Generador local de informes de cartera Teclogi." />
+  <title>Informe de carteras | Teclogi</title>
+  <style>
+    :root { --ink:#14251f; --muted:#61706b; --line:#d8e1dc; --canvas:#f4f7f5; --surface:#fff; --accent:#0b6b51; --accent-dark:#07503d; --accent-soft:#e3f1ec; --danger:#a23c32; --shadow:0 18px 46px rgba(25,52,42,.08); --radius:16px; }
+    @media (prefers-color-scheme: dark) { :root { --ink:#edf5f1; --muted:#aabbb4; --line:#31463e; --canvas:#101916; --surface:#17231e; --accent:#66c9a8; --accent-dark:#82d8bb; --accent-soft:#1c382d; --danger:#ff9c91; --shadow:0 18px 46px rgba(0,0,0,.22); } }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--canvas); color:var(--ink); font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; font-size:15px; line-height:1.5; }
+    button,input { font:inherit; }
+    button { cursor:pointer; }
+    .shell { width:min(1180px,calc(100% - 40px)); margin:0 auto; }
+    header { padding:24px 0 20px; border-bottom:1px solid var(--line); }
+    .brand { display:flex; align-items:center; gap:12px; font-weight:750; letter-spacing:-.02em; }
+    .brand-mark { width:34px; height:34px; border-radius:9px; background:var(--accent); display:grid; place-items:center; color:#fff; font-size:17px; font-weight:800; }
+    .brand small { color:var(--muted); font-weight:600; letter-spacing:0; margin-left:7px; }
+    main { padding:52px 0 64px; }
+    .hero { display:grid; grid-template-columns:minmax(0,1fr) 315px; gap:48px; align-items:end; margin-bottom:40px; }
+    .eyebrow { color:var(--accent); font-size:12px; font-weight:750; letter-spacing:.08em; text-transform:uppercase; margin:0 0 10px; }
+    h1 { max-width:750px; font-size:clamp(34px,5vw,58px); line-height:1.02; letter-spacing:-.055em; margin:0; }
+    .intro { max-width:610px; color:var(--muted); font-size:17px; margin:18px 0 0; }
+    .privacy { padding:18px 20px; border-left:3px solid var(--accent); background:var(--accent-soft); border-radius:0 12px 12px 0; color:var(--ink); font-size:14px; }
+    .privacy strong { display:block; margin-bottom:3px; }
+    .workspace { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+    .workspace-head { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:22px 26px; border-bottom:1px solid var(--line); }
+    .workspace-head h2 { margin:0; font-size:18px; letter-spacing:-.02em; }
+    .engine { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px; }
+    .signal { width:8px; height:8px; border-radius:50%; background:#a3b0ab; }
+    .engine.ready .signal { background:var(--accent); }
+    .engine.failed .signal { background:var(--danger); }
+    .drop-zone { position:relative; margin:26px; min-height:200px; padding:36px 24px; border:1.5px dashed #9bb8ad; border-radius:12px; display:grid; place-items:center; text-align:center; background:color-mix(in srgb,var(--accent-soft) 42%,transparent); transition:border-color .18s ease, background .18s ease, transform .18s ease; }
+    .drop-zone.dragging { border-color:var(--accent); background:var(--accent-soft); transform:scale(.995); }
+    .drop-zone input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+    .drop-title { font-size:18px; font-weight:720; letter-spacing:-.02em; }
+    .drop-copy { color:var(--muted); margin:5px 0 0; }
+    .select-link { color:var(--accent); text-decoration:underline; text-underline-offset:3px; font-weight:700; }
+    .files { margin:0 26px 24px; }
+    .file-list { display:grid; gap:8px; margin-top:10px; }
+    .file-item { display:grid; grid-template-columns:1fr auto auto; gap:14px; align-items:center; padding:12px 14px; background:var(--canvas); border-radius:10px; font-size:14px; }
+    .file-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:650; }
+    .file-size { color:var(--muted); font-variant-numeric:tabular-nums; }
+    .remove { appearance:none; border:0; background:transparent; color:var(--danger); padding:4px; font-weight:700; }
+    .empty { color:var(--muted); font-size:14px; padding:4px 0; }
+    .actions { display:flex; justify-content:space-between; align-items:center; gap:20px; padding:20px 26px; background:color-mix(in srgb,var(--canvas) 66%,transparent); border-top:1px solid var(--line); }
+    .hint { max-width:670px; margin:0; color:var(--muted); font-size:13px; }
+    .primary { border:0; border-radius:9px; padding:12px 18px; background:var(--accent); color:#fff; font-weight:750; white-space:nowrap; transition:background .18s ease,transform .18s ease; }
+    .primary:hover:not(:disabled) { background:var(--accent-dark); }
+    .primary:active:not(:disabled) { transform:translateY(1px); }
+    .primary:disabled { opacity:.48; cursor:not-allowed; }
+    .status { display:none; margin-top:24px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); padding:22px 26px; }
+    .status.visible { display:block; }
+    .status-top { display:flex; justify-content:space-between; gap:20px; align-items:baseline; }
+    .status h2 { margin:0; font-size:18px; }
+    .status-count { color:var(--muted); font-size:14px; font-variant-numeric:tabular-nums; }
+    .stage-list { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px 18px; list-style:none; padding:0; margin:19px 0 0; color:var(--muted); font-size:14px; }
+    .stage-list li { display:flex; gap:8px; align-items:center; }
+    .stage-list li::before { content:""; height:7px; width:7px; border-radius:50%; background:#b1bdb8; flex:0 0 auto; }
+    .stage-list li.done { color:var(--ink); }
+    .stage-list li.done::before { background:var(--accent); }
+    .stage-list li.current { color:var(--accent); font-weight:700; }
+    .stage-list li.current::before { background:var(--accent); animation:pulse 1.2s ease-in-out infinite; }
+    .report { display:none; margin-top:24px; }
+    .report.visible { display:block; }
+    .results { display:grid; grid-template-columns:1.35fr .65fr; gap:20px; }
+    .result-panel { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:24px; }
+    .result-panel h2 { margin:0; font-size:19px; letter-spacing:-.025em; }
+    .result-panel p { color:var(--muted); margin:6px 0 20px; }
+    .metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1px; border:1px solid var(--line); overflow:hidden; border-radius:10px; background:var(--line); }
+    .metric { background:var(--surface); padding:15px; }
+    .metric-label { display:block; font-size:12px; color:var(--muted); }
+    .metric-value { display:block; margin-top:4px; font-size:19px; font-weight:750; letter-spacing:-.025em; font-variant-numeric:tabular-nums; }
+    .report-list { list-style:none; padding:0; margin:0 0 20px; display:grid; gap:10px; }
+    .report-list li { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:14px; }
+    .report-list li::before { content:"✓"; color:var(--accent); font-weight:800; }
+    .error { display:none; margin-top:18px; color:var(--danger); font-size:14px; }
+    .error.visible { display:block; }
+    footer { border-top:1px solid var(--line); padding:20px 0 32px; color:var(--muted); font-size:13px; }
+    @keyframes pulse { 50% { opacity:.3; transform:scale(1.45); } }
+    @media (prefers-reduced-motion: reduce) { * { animation:none!important; transition:none!important; } }
+    @media (max-width:780px) { .shell { width:min(100% - 28px,1180px); } main { padding-top:34px; } .hero,.results { grid-template-columns:1fr; gap:22px; } .workspace-head,.actions { align-items:flex-start; flex-direction:column; } .primary { width:100%; } .stage-list { grid-template-columns:1fr; } .drop-zone,.files { margin-left:16px; margin-right:16px; } .metrics { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <header><div class="shell"><div class="brand"><span class="brand-mark" aria-hidden="true">T</span> Teclogi <small>Informes de cartera</small></div></div></header>
+  <main class="shell">
+    <section class="hero" aria-labelledby="page-title">
+      <div><p class="eyebrow">Procesamiento local</p><h1 id="page-title">Informe de carteras listo para Excel.</h1><p class="intro">Carga uno o varios archivos JSON. DuckDB-WASM analiza los registros en tu navegador y genera el libro con el mismo esquema del informe de referencia.</p></div>
+      <aside class="privacy"><strong>Los datos no se suben</strong>Los archivos permanecen en este equipo. Solo se descargan componentes públicos de la aplicación al abrir la página.</aside>
+    </section>
+    <section class="workspace" aria-labelledby="upload-title">
+      <div class="workspace-head"><h2 id="upload-title">Archivos de cartera</h2><div class="engine" id="engine-status"><span class="signal"></span><span id="engine-text">Preparando DuckDB-WASM</span></div></div>
+      <label class="drop-zone" id="drop-zone"><input id="file-input" type="file" accept=".json,application/json" multiple /><div><div class="drop-title">Arrastra los JSON de cartera aquí</div><p class="drop-copy">o <span class="select-link">selecciona archivos</span> desde tu equipo</p></div></label>
+      <div class="files"><strong>Archivos seleccionados</strong><div id="file-list" class="file-list"><p class="empty">Aún no has seleccionado archivos.</p></div></div>
+      <div class="actions"><p class="hint">Formato esperado: un arreglo JSON de objetos de cartera. Se admiten varios archivos y se unifican sin enviar información a ningún servidor.</p><button class="primary" id="generate" type="button" disabled>Generar informe</button></div>
+    </section>
+    <section class="status" id="status" aria-live="polite"><div class="status-top"><h2 id="status-title">Preparando procesamiento</h2><span id="status-count" class="status-count"></span></div><ol class="stage-list" id="stage-list"><li data-stage="engine">Motor analítico</li><li data-stage="load">Archivos cargados</li><li data-stage="normalize">Datos normalizados</li><li data-stage="aggregate">Indicadores calculados</li><li data-stage="workbook">Libro generado</li></ol><p class="error" id="error"></p></section>
+    <section class="report" id="report" aria-labelledby="report-title"><div class="results"><div class="result-panel"><h2 id="report-title">Resumen del informe</h2><p id="report-copy">La base se procesó correctamente.</p><div class="metrics" id="metrics"></div></div><div class="result-panel"><h2>Libro de salida</h2><p>Se incluyen las nueve vistas del informe.</p><ul class="report-list"><li>Resumen ejecutivo</li><li>Base de datos normalizada</li><li>Análisis por cliente, estado y año</li><li>Antigüedad, causas, deudores y gestores</li></ul><button class="primary" id="download" type="button">Descargar XLSX</button></div></div></section>
+  </main>
+  <footer><div class="shell">DuckDB-WASM procesa los datos de forma local. Para volúmenes especialmente grandes, usa Chrome o Edge en un equipo con memoria disponible.</div></footer>
+
+  <script type="module">
+    import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.0/+esm';
+    import * as XLSX from 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm';
+
+    const state = { files: [], db: null, conn: null, workbook: null, rows: 0, loading: false };
+    const el = Object.fromEntries(['file-input','file-list','drop-zone','generate','engine-status','engine-text','status','status-title','status-count','stage-list','error','report','report-copy','metrics','download'].map(id => [id.replaceAll('-', '_'), document.getElementById(id)]));
+    const money = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+    const integer = new Intl.NumberFormat('es-CO');
+
+    function sqlName(name) { return `"${String(name).replaceAll('"', '""')}"`; }
+    function sqlText(text) { return `'${String(text).replaceAll("'", "''")}'`; }
+    function fileSize(bytes) { return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`; }
+    function setEngine(kind, message) { el.engine_status.className = `engine ${kind}`; el.engine_text.textContent = message; }
+    function showError(message) { el.error.textContent = message; el.error.classList.add('visible'); }
+    function clearError() { el.error.textContent = ''; el.error.classList.remove('visible'); }
+    function stage(active, done = []) { [...el.stage_list.children].forEach(item => { item.className = done.includes(item.dataset.stage) ? 'done' : item.dataset.stage === active ? 'current' : ''; }); }
+    function status(title, count = '') { el.status.classList.add('visible'); el.status_title.textContent = title; el.status_count.textContent = count; }
+    function yieldFrame() { return new Promise(resolve => requestAnimationFrame(resolve)); }
+
+    async function initDuckDB() {
+      try {
+        const bundles = duckdb.getJsDelivrBundles();
+        const bundle = await duckdb.selectBundle(bundles);
+        const workerUrl = URL.createObjectURL(new Blob([`importScripts("${bundle.mainWorker}");`], { type: 'text/javascript' }));
+        const worker = new Worker(workerUrl);
+        const db = new duckdb.AsyncDuckDB(new duckdb.VoidLogger(), worker);
+        await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+        URL.revokeObjectURL(workerUrl);
+        state.db = db;
+        state.conn = await db.connect();
+        setEngine('ready', 'DuckDB-WASM listo');
+        updateButton();
+      } catch (error) {
+        console.error(error);
+        setEngine('failed', 'No se pudo iniciar DuckDB-WASM');
+        showError('No se pudo cargar el motor analítico. Comprueba la conexión a internet y vuelve a abrir la página.');
+      }
+    }
+
+    function renderFiles() {
+      if (!state.files.length) { el.file_list.innerHTML = '<p class="empty">Aún no has seleccionado archivos.</p>'; return; }
+      el.file_list.innerHTML = state.files.map((file, index) => `<div class="file-item"><span class="file-name">${escapeHtml(file.name)}</span><span class="file-size">${fileSize(file.size)}</span><button class="remove" type="button" data-index="${index}" aria-label="Quitar ${escapeHtml(file.name)}">Quitar</button></div>`).join('');
+    }
+    function escapeHtml(value) { const div = document.createElement('div'); div.textContent = value; return div.innerHTML; }
+    function updateButton() { el.generate.disabled = !state.db || !state.files.length || state.loading; }
+    function addFiles(files) {
+      const jsonFiles = [...files].filter(file => file.name.toLowerCase().endsWith('.json') || file.type === 'application/json');
+      const existing = new Set(state.files.map(file => `${file.name}:${file.size}:${file.lastModified}`));
+      state.files.push(...jsonFiles.filter(file => !existing.has(`${file.name}:${file.size}:${file.lastModified}`)));
+      renderFiles(); updateButton();
+    }
+
+    async function queryRows(query) {
+      const table = await state.conn.query(query);
+      return table.toArray().map(row => typeof row.toJSON === 'function' ? row.toJSON() : row);
+    }
+    function value(row, key) { const result = row[key]; return typeof result === 'bigint' ? Number(result) : result == null ? null : result; }
+    function rowsToArray(rows, columns) { return rows.map(row => columns.map(([key, transform]) => transform ? transform(value(row, key)) : value(row, key))); }
+
+    async function registerFiles() {
+      const tables = [];
+      for (let index = 0; index < state.files.length; index++) {
+        const file = state.files[index];
+        const filename = `cartera_${index}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        const text = await file.text();
+        const first = text.trim()[0];
+        if (first !== '[' && first !== '{') throw new Error(`${file.name} no contiene JSON válido.`);
+        await state.db.registerFileText(filename, text);
+        tables.push(`SELECT * FROM read_json_auto(${sqlText(filename)}, union_by_name = true)`);
+        status('Cargando archivos locales', `${index + 1} de ${state.files.length}`);
+        await yieldFrame();
+      }
+      await state.conn.query(`CREATE OR REPLACE TABLE cartera_raw AS ${tables.join(' UNION ALL BY NAME ')}`);
+    }
+
+    async function createNormalizedTable() {
+      await state.conn.query(`
+        CREATE OR REPLACE TABLE cartera AS
+        SELECT
+          CAST(consecutive AS VARCHAR) AS consecutivo,
+          COALESCE(CAST(licensePlate AS VARCHAR), '') AS placa,
+          COALESCE(CAST(companyName AS VARCHAR), 'Sin cliente') AS cliente,
+          try_cast(substr(CAST(creationDate AS VARCHAR), 1, 10) AS DATE) AS fecha_creacion,
+          COALESCE(CAST(amountInitial AS DOUBLE), 0) AS valor_inicial,
+          COALESCE(CAST(amountReceived AS DOUBLE), 0) AS recuperado,
+          CASE lower(COALESCE(CAST(state.description AS VARCHAR), ''))
+            WHEN 'paid' THEN 'Pagada'
+            WHEN 'deleted' THEN 'Anulada'
+            ELSE 'Pendiente'
+          END AS estado,
+          COALESCE(CAST(whoCreates.name AS VARCHAR), 'Sin asignar') AS creado_por,
+          COALESCE(CAST(whoReports.name AS VARCHAR), 'Sin asignar') AS reportado_por,
+          COALESCE(CAST(ownerDocument AS VARCHAR), '') AS deudor,
+          COALESCE(array_length(modifications), 0) AS cuotas,
+          0 AS cuotas_pendientes,
+          COALESCE(CAST(reason AS VARCHAR), 'Sin motivo') AS motivo
+        FROM cartera_raw
+      `);
+      await state.conn.query(`
+        CREATE OR REPLACE VIEW cartera_informe AS
+        SELECT *,
+          valor_inicial - recuperado AS saldo_por_recuperar,
+          CASE WHEN valor_inicial = 0 THEN 0 ELSE recuperado / valor_inicial END AS porcentaje_recuperado,
+          date_diff('day', fecha_creacion, current_date) AS antiguedad_dias,
+          CASE
+            WHEN fecha_creacion IS NULL THEN 'Sin fecha'
+            WHEN date_diff('day', fecha_creacion, current_date) <= 90 THEN '0-90 dias'
+            WHEN date_diff('day', fecha_creacion, current_date) <= 180 THEN '91-180 dias'
+            WHEN date_diff('day', fecha_creacion, current_date) <= 365 THEN '181-365 dias'
+            WHEN date_diff('day', fecha_creacion, current_date) <= 730 THEN '1-2 anos'
+            ELSE 'Mas de 2 anos'
+          END AS rango_antiguedad
+        FROM cartera
+      `);
+    }
+
+    const aggregateQueries = {
+      resumen: `SELECT count(*) AS registros, coalesce(sum(valor_inicial),0) AS creado, coalesce(sum(recuperado),0) AS recuperado, coalesce(sum(saldo_por_recuperar),0) AS saldo, coalesce(sum(CASE WHEN estado = 'Pendiente' THEN valor_inicial ELSE 0 END),0) AS vigente_creado, coalesce(sum(CASE WHEN estado = 'Pendiente' THEN recuperado ELSE 0 END),0) AS vigente_recuperado, coalesce(sum(CASE WHEN estado = 'Pendiente' THEN saldo_por_recuperar ELSE 0 END),0) AS vigente_saldo, sum(CASE WHEN estado = 'Pendiente' THEN 1 ELSE 0 END) AS pendientes, sum(CASE WHEN estado = 'Pagada' THEN 1 ELSE 0 END) AS pagadas, sum(CASE WHEN estado = 'Anulada' THEN 1 ELSE 0 END) AS anuladas, coalesce(sum(CASE WHEN estado = 'Anulada' THEN saldo_por_recuperar ELSE 0 END),0) AS anulado, coalesce(avg(valor_inicial),0) AS ticket, coalesce(max(valor_inicial),0) AS maxima, count(DISTINCT cliente) AS clientes FROM cartera_informe`,
+      datos: `SELECT consecutivo, placa, cliente, fecha_creacion, year(fecha_creacion) AS anio, valor_inicial, recuperado, saldo_por_recuperar, porcentaje_recuperado, estado, antiguedad_dias, rango_antiguedad, creado_por, reportado_por, deudor, cuotas, cuotas_pendientes, motivo FROM cartera_informe ORDER BY fecha_creacion DESC NULLS LAST, consecutivo`,
+      cliente: `SELECT cliente, count(*) AS carteras, sum(CASE WHEN estado='Pendiente' THEN 1 ELSE 0 END) AS pendientes, sum(CASE WHEN estado='Pendiente' THEN saldo_por_recuperar ELSE 0 END) AS saldo_pendiente, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado, CASE WHEN sum(valor_inicial)=0 THEN 0 ELSE sum(recuperado)/sum(valor_inicial) END AS porcentaje_recuperado FROM cartera_informe GROUP BY cliente ORDER BY saldo_pendiente DESC`,
+      estado: `SELECT estado, count(*) AS carteras, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado, sum(saldo_por_recuperar) AS saldo, CASE WHEN sum(valor_inicial)=0 THEN 0 ELSE sum(recuperado)/sum(valor_inicial) END AS porcentaje_recuperado FROM cartera_informe GROUP BY estado ORDER BY CASE estado WHEN 'Pendiente' THEN 1 WHEN 'Pagada' THEN 2 ELSE 3 END`,
+      anio: `SELECT coalesce(CAST(year(fecha_creacion) AS VARCHAR),'Sin fecha') AS anio, count(*) AS carteras, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado, sum(saldo_por_recuperar) AS saldo, CASE WHEN sum(valor_inicial)=0 THEN 0 ELSE sum(recuperado)/sum(valor_inicial) END AS porcentaje_recuperado FROM cartera_informe GROUP BY year(fecha_creacion) ORDER BY anio`,
+      antiguedad: `SELECT rango_antiguedad, count(*) AS carteras, sum(CASE WHEN estado='Pendiente' THEN 1 ELSE 0 END) AS pendientes, sum(CASE WHEN estado='Pendiente' THEN saldo_por_recuperar ELSE 0 END) AS saldo_pendiente, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado FROM cartera_informe GROUP BY rango_antiguedad ORDER BY CASE rango_antiguedad WHEN '0-90 dias' THEN 1 WHEN '91-180 dias' THEN 2 WHEN '181-365 dias' THEN 3 WHEN '1-2 anos' THEN 4 WHEN 'Mas de 2 anos' THEN 5 ELSE 6 END`,
+      causa: `SELECT motivo, count(*) AS carteras, sum(CASE WHEN estado='Pendiente' THEN 1 ELSE 0 END) AS pendientes, sum(CASE WHEN estado='Pendiente' THEN saldo_por_recuperar ELSE 0 END) AS saldo_pendiente, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado, CASE WHEN sum(valor_inicial)=0 THEN 0 ELSE sum(recuperado)/sum(valor_inicial) END AS porcentaje_recuperado FROM cartera_informe GROUP BY motivo ORDER BY saldo_pendiente DESC`,
+      deudor: `SELECT deudor, count(*) AS carteras, sum(CASE WHEN estado='Pendiente' THEN 1 ELSE 0 END) AS pendientes, sum(CASE WHEN estado='Pendiente' THEN saldo_por_recuperar ELSE 0 END) AS saldo_pendiente, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado, CASE WHEN sum(valor_inicial)=0 THEN 0 ELSE sum(recuperado)/sum(valor_inicial) END AS porcentaje_recuperado FROM cartera_informe WHERE deudor <> '' GROUP BY deudor ORDER BY saldo_pendiente DESC LIMIT 100`,
+      gestor: `SELECT creado_por, count(*) AS carteras, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado, sum(saldo_por_recuperar) AS saldo, CASE WHEN sum(valor_inicial)=0 THEN 0 ELSE sum(recuperado)/sum(valor_inicial) END AS porcentaje_recuperado FROM cartera_informe GROUP BY creado_por ORDER BY saldo DESC`
+    };
+
+    function createSheet(workbook, title, headers, rows, options = {}) {
+      const data = [headers, ...rows];
+      const sheet = XLSX.utils.aoa_to_sheet(data);
+      sheet['!freeze'] = { xSplit: 0, ySplit: 1 };
+      sheet['!autofilter'] = { ref: `A1:${XLSX.utils.encode_col(headers.length - 1)}${Math.max(data.length, 1)}` };
+      sheet['!cols'] = headers.map((header, index) => ({ wch: options.widths?.[index] || Math.min(Math.max(String(header).length + 3, 14), 38) }));
+      for (let col = 0; col < headers.length; col++) {
+        const cell = sheet[XLSX.utils.encode_cell({ r: 0, c: col })];
+        cell.s = { fill: { fgColor: { rgb: '0B6B51' } }, font: { bold: true, color: { rgb: 'FFFFFF' } }, alignment: { vertical: 'center', wrapText: true } };
+      }
+      const dateCols = new Set(options.dateCols || []), moneyCols = new Set(options.moneyCols || []), percentCols = new Set(options.percentCols || []), integerCols = new Set(options.integerCols || []);
+      for (let r = 1; r < data.length; r++) for (let c = 0; c < headers.length; c++) {
+        const cell = sheet[XLSX.utils.encode_cell({ r, c })]; if (!cell) continue;
+        if (dateCols.has(c) && cell.v) { cell.z = 'dd/mm/yyyy'; }
+        if (moneyCols.has(c)) cell.z = '$#,##0';
+        if (percentCols.has(c)) cell.z = '0.0%';
+        if (integerCols.has(c)) cell.z = '#,##0';
+      }
+      XLSX.utils.book_append_sheet(workbook, sheet, title);
+    }
+
+    function buildWorkbook(result) {
+      const wb = XLSX.utils.book_new();
+      const r = result.resumen[0];
+      const summary = [
+        ['INFORME DE CARTERAS - TECLOGI', ''], ['Resumen ejecutivo. Todos los valores en pesos colombianos (COP).', ''], ['Fecha de corte del informe', new Date()], ['Registros en la base', value(r,'registros')], [], ['INDICADOR', 'VALOR'],
+        ['Cartera total creada', value(r,'creado')], ['Total recuperado', value(r,'recuperado')], ['Saldo pendiente por recuperar', value(r,'saldo')], ['% de recuperacion global', value(r,'creado') ? value(r,'recuperado') / value(r,'creado') : 0], [],
+        ['Carteras VIGENTES (pendientes)', value(r,'pendientes')], ['Valor creado (vigentes)', value(r,'vigente_creado')], ['Valor recuperado (vigentes)', value(r,'vigente_recuperado')], ['SALDO EN RIESGO (vigentes)', value(r,'vigente_saldo')], ['% recuperacion (vigentes)', value(r,'vigente_creado') ? value(r,'vigente_recuperado') / value(r,'vigente_creado') : 0], [],
+        ['Carteras PAGADAS', value(r,'pagadas')], ['Carteras ANULADAS', value(r,'anuladas')], ['Valor anulado (no recuperable)', value(r,'anulado')], [], ['Ticket promedio por cartera', value(r,'ticket')], ['Cartera mas alta registrada', value(r,'maxima')], ['Clientes distintos', value(r,'clientes')], [],
+        ['Notas metodologicas', ''], ['Saldo por recuperar = Valor inicial - Valor recuperado.', ''], ['Pendiente: state.description diferente de paid o deleted. Pagada: paid. Anulada: deleted.', ''], ['Las carteras anuladas se conservan para trazabilidad.', ''], ['Cuotas pendientes se deja en 0 porque el JSON de origen no identifica una cuota como pendiente.', '']
+      ];
+      const sheet = XLSX.utils.aoa_to_sheet(summary);
+      sheet['!cols'] = [{ wch: 45 }, { wch: 25 }];
+      sheet['A1'].s = { fill:{fgColor:{rgb:'0B6B51'}}, font:{bold:true,color:{rgb:'FFFFFF'},sz:15} }; sheet['A6'].s = sheet['B6'].s = { fill:{fgColor:{rgb:'0B6B51'}}, font:{bold:true,color:{rgb:'FFFFFF'}} };
+      for (const cellRef of ['B3']) if (sheet[cellRef]) sheet[cellRef].z='dd/mm/yyyy';
+      for (const row of [7,8,9,12,13,14,19,22,23]) { const cell=sheet[`B${row}`]; if(cell) cell.z='$#,##0'; }
+      for (const row of [10,15]) { const cell=sheet[`B${row}`]; if(cell) cell.z='0.0%'; }
+      XLSX.utils.book_append_sheet(wb, sheet, 'Resumen');
+      createSheet(wb, 'Datos', ['Consecutivo','Placa','Cliente','Fecha creacion','Ano','Valor inicial (COP)','Recuperado (COP)','Saldo por recuperar (COP)','% Recuperado','Estado','Antiguedad (dias)','Rango antiguedad','Creado por','Reportado por','Deudor','Cuotas','Cuotas pendientes','Motivo'], rowsToArray(result.datos, [['consecutivo'],['placa'],['cliente'],['fecha_creacion'],['anio'],['valor_inicial'],['recuperado'],['saldo_por_recuperar'],['porcentaje_recuperado'],['estado'],['antiguedad_dias'],['rango_antiguedad'],['creado_por'],['reportado_por'],['deudor'],['cuotas'],['cuotas_pendientes'],['motivo']]), {dateCols:[3],moneyCols:[5,6,7],percentCols:[8],integerCols:[4,10,15,16],widths:[12,12,32,14,9,18,18,22,14,14,17,18,24,24,18,10,18,46]});
+      createSheet(wb, 'PorCliente', ['Cliente','Carteras','Pendientes','Saldo pendiente (COP)','Valor creado (COP)','Recuperado (COP)','% recuperado'], rowsToArray(result.cliente, [['cliente'],['carteras'],['pendientes'],['saldo_pendiente'],['creado'],['recuperado'],['porcentaje_recuperado']]), {integerCols:[1,2],moneyCols:[3,4,5],percentCols:[6],widths:[35,12,13,22,21,20,16]});
+      createSheet(wb, 'PorEstado', ['Estado','Carteras','Valor creado (COP)','Recuperado (COP)','Saldo (COP)','% recuperado'], rowsToArray(result.estado, [['estado'],['carteras'],['creado'],['recuperado'],['saldo'],['porcentaje_recuperado']]), {integerCols:[1],moneyCols:[2,3,4],percentCols:[5],widths:[18,12,21,20,20,16]});
+      createSheet(wb, 'PorAnio', ['Ano','Carteras','Valor creado (COP)','Recuperado (COP)','Saldo (COP)','% recuperado'], rowsToArray(result.anio, [['anio'],['carteras'],['creado'],['recuperado'],['saldo'],['porcentaje_recuperado']]), {integerCols:[1],moneyCols:[2,3,4],percentCols:[5]});
+      createSheet(wb, 'Antiguedad', ['Rango antiguedad','Carteras','Pendientes','Saldo pendiente (COP)','Valor creado (COP)','Recuperado (COP)'], rowsToArray(result.antiguedad, [['rango_antiguedad'],['carteras'],['pendientes'],['saldo_pendiente'],['creado'],['recuperado']]), {integerCols:[1,2],moneyCols:[3,4,5],widths:[22,12,13,22,21,20]});
+      createSheet(wb, 'PorCausa', ['Causa','Carteras','Pendientes','Saldo pendiente (COP)','Valor creado (COP)','Recuperado (COP)','% recuperado'], rowsToArray(result.causa, [['motivo'],['carteras'],['pendientes'],['saldo_pendiente'],['creado'],['recuperado'],['porcentaje_recuperado']]), {integerCols:[1,2],moneyCols:[3,4,5],percentCols:[6],widths:[46,12,13,22,21,20,16]});
+      createSheet(wb, 'TopDeudores', ['Deudor','Carteras','Pendientes','Saldo pendiente (COP)','Valor creado (COP)','Recuperado (COP)','% recuperado'], rowsToArray(result.deudor, [['deudor'],['carteras'],['pendientes'],['saldo_pendiente'],['creado'],['recuperado'],['porcentaje_recuperado']]), {integerCols:[1,2],moneyCols:[3,4,5],percentCols:[6],widths:[22,12,13,22,21,20,16]});
+      createSheet(wb, 'PorGestor', ['Gestor','Carteras','Valor creado (COP)','Recuperado (COP)','Saldo (COP)','% recuperado'], rowsToArray(result.gestor, [['creado_por'],['carteras'],['creado'],['recuperado'],['saldo'],['porcentaje_recuperado']]), {integerCols:[1],moneyCols:[2,3,4],percentCols:[5],widths:[35,12,21,20,20,16]});
+      return wb;
+    }
+
+    async function generate() {
+      state.loading = true; updateButton(); clearError(); el.report.classList.remove('visible'); status('Iniciando DuckDB-WASM'); stage('engine');
+      try {
+        await registerFiles(); stage('load',['engine']); status('Normalizando campos de cartera');
+        await createNormalizedTable(); stage('normalize',['engine','load']);
+        const count = await queryRows('SELECT count(*) AS total FROM cartera_informe'); state.rows = Number(value(count[0], 'total'));
+        if (!state.rows) throw new Error('No se encontraron registros de cartera en los archivos seleccionados.');
+        if (state.rows > 1048575) throw new Error('El libro XLSX admite hasta 1.048.575 registros en la hoja Datos. Divide la exportación en varios archivos.');
+        status('Calculando indicadores con SQL', `${integer.format(state.rows)} registros`); await yieldFrame();
+        const result = {}; for (const [key, query] of Object.entries(aggregateQueries)) result[key] = await queryRows(query);
+        stage('aggregate',['engine','load','normalize']); status('Construyendo el libro Excel', `${integer.format(state.rows)} registros`); await yieldFrame();
+        state.workbook = buildWorkbook(result); stage('workbook',['engine','load','normalize','aggregate']); status('Informe listo', `${integer.format(state.rows)} registros procesados`);
+        renderResults(result.resumen[0]); el.report.classList.add('visible');
+      } catch (error) { console.error(error); showError(error.message || 'No se pudo generar el informe.'); status('El proceso no pudo terminar'); }
+      finally { state.loading = false; updateButton(); }
+    }
+    function renderResults(summary) {
+      const created=value(summary,'creado')||0, recovered=value(summary,'recuperado')||0, outstanding=value(summary,'saldo')||0;
+      el.report_copy.textContent = `${integer.format(state.rows)} registros consolidados desde ${state.files.length} archivo${state.files.length === 1 ? '' : 's'}.`;
+      el.metrics.innerHTML = [ ['Cartera creada',money.format(created)], ['Recuperado',money.format(recovered)], ['Saldo en riesgo',money.format(outstanding)], ['Recuperacion global',`${((created ? recovered / created : 0) * 100).toFixed(1)}%`], ['Clientes distintos',integer.format(Number(value(summary,'clientes')||0))], ['Carteras pendientes',integer.format(Number(value(summary,'pendientes')||0))] ].map(([label, val]) => `<div class="metric"><span class="metric-label">${label}</span><span class="metric-value">${val}</span></div>`).join('');
+    }
+
+    el.file_input.addEventListener('change', event => addFiles(event.target.files));
+    el.drop_zone.addEventListener('dragover', event => { event.preventDefault(); el.drop_zone.classList.add('dragging'); });
+    el.drop_zone.addEventListener('dragleave', () => el.drop_zone.classList.remove('dragging'));
+    el.drop_zone.addEventListener('drop', event => { event.preventDefault(); el.drop_zone.classList.remove('dragging'); addFiles(event.dataTransfer.files); });
+    el.file_list.addEventListener('click', event => { const button = event.target.closest('[data-index]'); if (!button) return; state.files.splice(Number(button.dataset.index),1); renderFiles(); updateButton(); });
+    el.generate.addEventListener('click', generate);
+    el.download.addEventListener('click', () => { if (state.workbook) XLSX.writeFile(state.workbook, `Informe_Carteras_Teclogi_${new Date().toISOString().slice(0,10)}.xlsx`, { compression: true }); });
+    initDuckDB();
+  </script>
+</body>
+</html>

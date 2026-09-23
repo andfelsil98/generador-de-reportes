@@ -1,0 +1,7 @@
+# Datos de cartera y exportaciones: no deben publicarse en el repositorio.
+*.json
+*.xlsx
+
+# Archivos locales de desarrollo.
+node_modules/
+.DS_Store
