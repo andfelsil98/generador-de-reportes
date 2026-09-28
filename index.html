@@ -6,14 +6,18 @@
   <meta name="description" content="Generador local de informes de cartera Teclogi." />
   <title>Informe de carteras | Teclogi</title>
   <style>
-    :root { --ink:#14251f; --muted:#61706b; --line:#d8e1dc; --canvas:#f4f7f5; --surface:#fff; --accent:#0b6b51; --accent-dark:#07503d; --accent-soft:#e3f1ec; --danger:#a23c32; --shadow:0 18px 46px rgba(25,52,42,.08); --radius:16px; }
-    @media (prefers-color-scheme: dark) { :root { --ink:#edf5f1; --muted:#aabbb4; --line:#31463e; --canvas:#101916; --surface:#17231e; --accent:#66c9a8; --accent-dark:#82d8bb; --accent-soft:#1c382d; --danger:#ff9c91; --shadow:0 18px 46px rgba(0,0,0,.22); } }
+    :root { --ink:#14251f; --muted:#61706b; --line:#d8e1dc; --canvas:#f4f7f5; --surface:#fff; --accent:#0b6b51; --accent-dark:#07503d; --accent-soft:#e3f1ec; --danger:#a23c32; --calc:#2d5a86; --calc-soft:#e6eef7; --app:#855510; --app-soft:#f8eedc; --shadow:0 18px 46px rgba(25,52,42,.08); --radius:16px; }
+    @media (prefers-color-scheme: dark) { :root { --ink:#edf5f1; --muted:#aabbb4; --line:#31463e; --canvas:#101916; --surface:#17231e; --accent:#66c9a8; --accent-dark:#82d8bb; --accent-soft:#1c382d; --danger:#ff9c91; --calc:#9fc5ec; --calc-soft:#1c2c3c; --app:#eac27c; --app-soft:#3a2d16; --shadow:0 18px 46px rgba(0,0,0,.22); } }
+    @media (prefers-reduced-motion: no-preference) { html { scroll-behavior:smooth; } }
     * { box-sizing:border-box; }
     body { margin:0; background:var(--canvas); color:var(--ink); font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; font-size:15px; line-height:1.5; }
     button,input { font:inherit; }
     button { cursor:pointer; }
     .shell { width:min(1180px,calc(100% - 40px)); margin:0 auto; }
     header { padding:24px 0 20px; border-bottom:1px solid var(--line); }
+    header .shell { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+    .top-link { color:var(--accent); font-size:14px; font-weight:700; text-decoration:none; padding:7px 12px; border-radius:8px; white-space:nowrap; }
+    .top-link:hover { background:var(--accent-soft); }
     .brand { display:flex; align-items:center; gap:12px; font-weight:750; letter-spacing:-.02em; }
     .brand-mark { width:34px; height:34px; border-radius:9px; background:var(--accent); display:grid; place-items:center; color:#fff; font-size:17px; font-weight:800; }
     .brand small { color:var(--muted); font-weight:600; letter-spacing:0; margin-left:7px; }
@@ -70,7 +74,12 @@
     .result-panel p { color:var(--muted); margin:6px 0 20px; }
     .metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1px; border:1px solid var(--line); overflow:hidden; border-radius:10px; background:var(--line); }
     .metric { background:var(--surface); padding:15px; }
+    .metric-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
     .metric-label { display:block; font-size:12px; color:var(--muted); }
+    .why { appearance:none; flex:0 0 auto; width:22px; height:22px; border-radius:50%; border:1px solid var(--line); background:var(--surface); color:var(--accent); font-size:12px; font-weight:800; line-height:1; display:grid; place-items:center; padding:0; }
+    .why:hover { background:var(--accent-soft); border-color:var(--accent); }
+    .panel-hint { font-size:13px; margin:14px 0 0!important; }
+    .text-link { display:inline-block; margin-top:14px; color:var(--accent); font-size:14px; font-weight:700; text-underline-offset:3px; }
     .metric-value { display:block; margin-top:4px; font-size:19px; font-weight:750; letter-spacing:-.025em; font-variant-numeric:tabular-nums; }
     .report-list { list-style:none; padding:0; margin:0 0 20px; display:grid; gap:10px; }
     .report-list li { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:14px; }
@@ -78,13 +87,84 @@
     .error { display:none; margin-top:18px; color:var(--danger); font-size:14px; }
     .error.visible { display:block; }
     footer { border-top:1px solid var(--line); padding:20px 0 32px; color:var(--muted); font-size:13px; }
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+    .lineage { margin-top:72px; scroll-margin-top:16px; }
+    .lineage-head { max-width:720px; margin-bottom:26px; }
+    .lineage-head h2 { margin:0; font-size:clamp(28px,3.6vw,38px); line-height:1.08; letter-spacing:-.045em; }
+    .lineage-head .lead { color:var(--muted); font-size:16px; margin:12px 0 0; }
+    .flow { list-style:none; margin:0 0 22px; padding:0; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; counter-reset:flow; }
+    .flow li { position:relative; display:flex; }
+    .flow li:not(:last-child)::after { content:"→"; position:absolute; top:50%; right:-15px; z-index:1; width:16px; transform:translateY(-50%); text-align:center; color:var(--accent); font-weight:800; }
+    .flow button { appearance:none; width:100%; display:flex; flex-direction:column; gap:3px; text-align:left; padding:16px 18px; border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--muted); font-size:13.5px; transition:border-color .18s ease, transform .18s ease; }
+    .flow button::before { counter-increment:flow; content:counter(flow); width:24px; height:24px; margin-bottom:8px; border-radius:50%; display:grid; place-items:center; background:var(--accent-soft); color:var(--accent); font-size:12px; font-weight:800; }
+    .flow button:hover { border-color:var(--accent); }
+    .flow strong { color:var(--ink); font-size:15px; }
+    .flow-link { margin-top:auto; padding-top:8px; color:var(--accent); font-size:13px; font-weight:700; }
+    .lineage-panel { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); scroll-margin-top:16px; }
+    .lineage-tools { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px 24px; padding:18px 22px; border-bottom:1px solid var(--line); }
+    .search { position:relative; flex:1 1 300px; max-width:440px; }
+    .search svg { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none; }
+    .search input { width:100%; padding:11px 14px 11px 38px; border:1px solid var(--line); border-radius:10px; background:var(--canvas); color:var(--ink); }
+    .search input::placeholder { color:var(--muted); }
+    .search input:focus { outline:2px solid var(--accent); outline-offset:1px; }
+    .legend { display:flex; flex-wrap:wrap; gap:8px 16px; list-style:none; margin:0; padding:0; color:var(--muted); font-size:12.5px; }
+    .legend .badge { margin:0 4px 0 0; }
+    .lineage-grid { display:grid; grid-template-columns:232px minmax(0,1fr); min-height:520px; }
+    .lineage-nav { border-right:1px solid var(--line); background:color-mix(in srgb,var(--canvas) 55%,transparent); border-radius:0 0 0 var(--radius); }
+    .nav-inner { position:sticky; top:12px; padding:14px 12px; }
+    .nav-group + .nav-group { margin-top:12px; }
+    .nav-label { display:block; padding:6px 10px; color:var(--muted); font-size:11px; font-weight:750; letter-spacing:.08em; text-transform:uppercase; }
+    .nav-item { appearance:none; width:100%; display:flex; justify-content:space-between; align-items:center; gap:10px; border:0; border-radius:8px; padding:8px 10px; background:transparent; color:var(--ink); font-size:14px; text-align:left; }
+    .nav-item:hover { background:var(--accent-soft); }
+    .nav-item[aria-current="true"] { background:var(--accent); color:var(--surface); font-weight:700; }
+    .nav-count { font-size:12px; opacity:.72; font-variant-numeric:tabular-nums; }
+    .lineage-view { min-width:0; padding:24px 28px 28px; }
+    .view-title { margin:0; font-size:21px; letter-spacing:-.025em; }
+    .view-desc { max-width:680px; margin:6px 0 14px; color:var(--muted); }
+    .facts { display:flex; flex-wrap:wrap; gap:8px; list-style:none; margin:0 0 20px; padding:0; }
+    .facts li { padding:6px 10px; border-radius:8px; background:var(--canvas); color:var(--muted); font-size:13px; }
+    .facts b { color:var(--ink); }
+    .entries { border-top:1px solid var(--line); }
+    .entry { display:grid; grid-template-columns:minmax(150px,210px) minmax(0,1fr); gap:6px 26px; padding:16px 10px; border-bottom:1px solid var(--line); scroll-margin:24px; transition:background .5s ease; }
+    .entry:focus { outline:none; }
+    .entry.flash { background:var(--accent-soft); }
+    .entry-name { margin:0; font-size:15px; font-weight:720; line-height:1.3; overflow-wrap:anywhere; }
+    .entry-name code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:14px; }
+    .entry-body { min-width:0; font-size:14px; }
+    .entry-body > * { margin:0; }
+    .entry-body > * + * { margin-top:8px; }
+    .entry-list { padding-left:18px; }
+    .entry-list li + li { margin-top:4px; }
+    .badge { display:inline-block; margin-top:7px; padding:2px 8px; border-radius:999px; font-size:11.5px; font-weight:700; white-space:nowrap; }
+    .badge.json { background:var(--accent-soft); color:var(--accent); }
+    .badge.calc { background:var(--calc-soft); color:var(--calc); }
+    .badge.app { background:var(--app-soft); color:var(--app); }
+    .src { display:flex; flex-wrap:wrap; align-items:center; gap:6px; color:var(--muted); font-size:13px; }
+    .src-label { margin-right:2px; font-weight:700; }
+    .src-text { color:var(--ink); }
+    code.field { padding:1px 7px; border:1px solid var(--line); border-radius:6px; background:var(--canvas); color:var(--ink); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; overflow-wrap:anywhere; }
+    .ref { appearance:none; padding:1px 8px; border:1px solid var(--line); border-radius:6px; background:transparent; color:var(--accent); font-size:12.5px; font-weight:650; }
+    .ref:hover { border-color:var(--accent); background:var(--accent-soft); }
+    .formula, .fallback { color:var(--muted); font-size:13px; }
+    .formula span { margin-left:6px; color:var(--ink); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; }
+    .fallback::before { content:"↳ "; color:var(--accent); font-weight:800; }
+    .note { padding:8px 12px; border-left:3px solid var(--app); border-radius:0 8px 8px 0; background:var(--app-soft); font-size:13px; }
+    .results-count { margin:0 0 18px; color:var(--muted); font-size:14px; }
+    .result-group + .result-group { margin-top:26px; }
+    .result-title { margin:0 0 10px; font-size:16px; }
+    .result-title button { appearance:none; border:0; padding:0; background:none; color:var(--ink); font-weight:750; }
+    .result-title button:hover { color:var(--accent); }
+    .no-results { padding:30px 0; color:var(--muted); }
+    .no-results p { margin:4px 0 0; }
+    .lineage button:focus-visible, .why:focus-visible, .top-link:focus-visible, .text-link:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
     @keyframes pulse { 50% { opacity:.3; transform:scale(1.45); } }
     @media (prefers-reduced-motion: reduce) { * { animation:none!important; transition:none!important; } }
-    @media (max-width:780px) { .shell { width:min(100% - 28px,1180px); } main { padding-top:34px; } .hero,.results { grid-template-columns:1fr; gap:22px; } .workspace-head,.actions { align-items:flex-start; flex-direction:column; } .primary { width:100%; } .stage-list { grid-template-columns:1fr; } .drop-zone,.files { margin-left:16px; margin-right:16px; } .metrics { grid-template-columns:1fr; } }
+    @media (max-width:780px) { .shell { width:min(100% - 28px,1180px); } main { padding-top:34px; } .hero,.results { grid-template-columns:1fr; gap:22px; } .workspace-head,.actions { align-items:flex-start; flex-direction:column; } .primary { width:100%; } .stage-list { grid-template-columns:1fr; } .drop-zone,.files { margin-left:16px; margin-right:16px; } .metrics { grid-template-columns:1fr; } .top-link { padding:7px 0; } .flow { grid-template-columns:1fr; gap:14px; } .flow li:not(:last-child)::after { content:"↓"; top:auto; bottom:-17px; right:auto; left:24px; transform:none; } .lineage-tools { padding:16px; } .lineage-grid { grid-template-columns:minmax(0,1fr); min-height:0; } .lineage-nav { min-width:0; border-right:0; border-bottom:1px solid var(--line); border-radius:0; } .nav-inner { position:static; display:flex; gap:6px; overflow-x:auto; padding:10px 16px; scrollbar-width:thin; } .nav-group { display:contents; } .nav-label { display:none; } .nav-item { width:auto; flex:0 0 auto; white-space:nowrap; background:var(--surface); border:1px solid var(--line); } .lineage-view { padding:20px 16px 24px; } .entry { grid-template-columns:1fr; padding:14px 4px; } }
+    @media (max-width:520px) { .brand small { display:none; } }
   </style>
 </head>
 <body>
-  <header><div class="shell"><div class="brand"><span class="brand-mark" aria-hidden="true">T</span> Teclogi <small>Informes de cartera</small></div></div></header>
+  <header><div class="shell"><div class="brand"><span class="brand-mark" aria-hidden="true">T</span> Teclogi <small>Informes de cartera</small></div><a class="top-link" href="#origen-datos">¿De dónde salen los datos?</a></div></header>
   <main class="shell">
     <section class="hero" aria-labelledby="page-title">
       <div><p class="eyebrow">Procesamiento local</p><h1 id="page-title">Informe de carteras listo para Excel.</h1><p class="intro">Carga uno o varios archivos JSON. DuckDB-WASM analiza los registros en tu navegador y genera el libro con el mismo esquema del informe de referencia.</p></div>
@@ -97,15 +177,258 @@
       <div class="actions"><p class="hint">Formato esperado: un arreglo JSON de objetos de cartera. Se admiten varios archivos y se unifican sin enviar información a ningún servidor.</p><button class="primary" id="generate" type="button" disabled>Generar informe</button></div>
     </section>
     <section class="status" id="status" aria-live="polite"><div class="status-top"><h2 id="status-title">Preparando procesamiento</h2><span id="status-count" class="status-count"></span></div><ol class="stage-list" id="stage-list"><li data-stage="engine">Motor analítico</li><li data-stage="load">Archivos cargados</li><li data-stage="normalize">Datos normalizados</li><li data-stage="aggregate">Indicadores calculados</li><li data-stage="workbook">Libro generado</li></ol><p class="error" id="error"></p></section>
-    <section class="report" id="report" aria-labelledby="report-title"><div class="results"><div class="result-panel"><h2 id="report-title">Resumen del informe</h2><p id="report-copy">La base se procesó correctamente.</p><div class="metrics" id="metrics"></div></div><div class="result-panel"><h2>Libro de salida</h2><p>Se incluyen las nueve vistas del informe.</p><ul class="report-list"><li>Resumen ejecutivo</li><li>Base de datos normalizada</li><li>Análisis por cliente, estado y año</li><li>Antigüedad, causas, deudores y gestores</li></ul><button class="primary" id="download" type="button">Descargar XLSX</button></div></div></section>
+    <section class="report" id="report" aria-labelledby="report-title"><div class="results"><div class="result-panel"><h2 id="report-title">Resumen del informe</h2><p id="report-copy">La base se procesó correctamente.</p><div class="metrics" id="metrics"></div><p class="panel-hint">Pulsa <strong>?</strong> junto a cada indicador para ver de dónde sale.</p></div><div class="result-panel"><h2>Libro de salida</h2><p>Se incluyen las nueve vistas del informe.</p><ul class="report-list"><li>Resumen ejecutivo</li><li>Base de datos normalizada</li><li>Análisis por cliente, estado y año</li><li>Antigüedad, causas, deudores y gestores</li></ul><button class="primary" id="download" type="button">Descargar XLSX</button><br /><a class="text-link" href="#origen-datos" data-lineage="resumen">¿De dónde sale cada columna del Excel?</a></div></div></section>
+    <section class="lineage" id="origen-datos" aria-labelledby="lineage-title">
+      <div class="lineage-head"><p class="eyebrow">Trazabilidad</p><h2 id="lineage-title">¿De dónde sale cada dato?</h2><p class="lead">Revisa, dato por dato, de qué campo del archivo JSON viene y cómo se calcula. Elige una parte del informe o busca el dato por su nombre.</p></div>
+      <ol class="flow" aria-label="Recorrido de los datos">
+        <li><button type="button" data-lineage="campos"><strong>Tus archivos JSON</strong><span>Cada objeto del arreglo es una cartera. Solo se leen 14 campos.</span><span class="flow-link">Ver campos →</span></button></li>
+        <li><button type="button" data-lineage="reglas"><strong>Limpieza</strong><span>Se quitan duplicados, se traduce el estado y se completan los datos vacíos.</span><span class="flow-link">Ver reglas →</span></button></li>
+        <li><button type="button" data-lineage="datos"><strong>Cálculo por cartera</strong><span>Saldo, % recuperado y antigüedad de cada cartera.</span><span class="flow-link">Ver hoja Datos →</span></button></li>
+        <li><button type="button" data-lineage="resumen"><strong>Totales del informe</strong><span>Sumas por cliente, estado, año y más, en pantalla y en las 9 hojas.</span><span class="flow-link">Ver hoja Resumen →</span></button></li>
+      </ol>
+      <div class="lineage-panel" id="lineage-panel">
+        <div class="lineage-tools">
+          <label class="search"><span class="sr-only">Buscar un dato</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="lineage-search" type="search" placeholder="Busca un dato: saldo, cliente, antigüedad…" autocomplete="off" /></label>
+          <ul class="legend" aria-label="Tipos de origen"><li><span class="badge json">Del JSON</span>se toma de un campo del archivo</li><li><span class="badge calc">Calculado</span>sale de otros datos</li><li><span class="badge app">Del informe</span>lo pone la aplicación</li></ul>
+        </div>
+        <div class="lineage-grid"><nav class="lineage-nav" aria-label="Partes del informe"><div class="nav-inner" id="lineage-nav"></div></nav><div class="lineage-view" id="lineage-view"></div></div>
+        <p class="sr-only" id="lineage-status" aria-live="polite"></p>
+      </div>
+    </section>
   </main>
   <footer><div class="shell">DuckDB-WASM procesa los datos de forma local. Para volúmenes especialmente grandes, usa Chrome o Edge en un equipo con memoria disponible.</div></footer>
+
+  <script>
+    // Trazabilidad: de qué campo del JSON o de qué cálculo sale cada dato del informe.
+    // Debe coincidir con createNormalizedTable, aggregateQueries, buildWorkbook y renderResults.
+    // En src/uses: 'campo' es un campo del JSON, 'vista/dato' enlaza otro dato de este catálogo y '~texto' describe la fuente en palabras.
+    (() => {
+      const KINDS = { json: 'Del JSON', calc: 'Calculado', app: 'Del informe' };
+      const groupColumns = {
+        carteras: { name: 'Carteras', kind: 'calc', how: 'Cantidad de carteras del grupo, en cualquier estado.', formula: 'CONTAR(carteras del grupo)' },
+        pendientes: { name: 'Pendientes', kind: 'calc', src: ['datos/estado'], how: 'Cantidad de carteras del grupo con estado Pendiente.', formula: 'CONTAR(Estado = Pendiente)' },
+        'saldo-pendiente': { name: 'Saldo pendiente (COP)', kind: 'calc', src: ['datos/saldo', 'datos/estado'], how: 'Suma del saldo por recuperar, solo de las carteras pendientes del grupo. Las pagadas y las anuladas no suman.', formula: 'SUMA(Saldo por recuperar) donde Estado = Pendiente' },
+        creado: { name: 'Valor creado (COP)', kind: 'calc', src: ['datos/valor-inicial'], how: 'Suma del valor inicial de todas las carteras del grupo, en cualquier estado.', formula: 'SUMA(Valor inicial)' },
+        recuperado: { name: 'Recuperado (COP)', kind: 'calc', src: ['datos/recuperado'], how: 'Suma de lo recuperado en todas las carteras del grupo, en cualquier estado.', formula: 'SUMA(Recuperado)' },
+        saldo: { name: 'Saldo (COP)', kind: 'calc', src: ['datos/saldo'], how: 'Suma del saldo por recuperar de todas las carteras del grupo, incluidas las pagadas y las anuladas.', formula: 'SUMA(Saldo por recuperar)' },
+        pct: { name: '% recuperado', kind: 'calc', src: ['datos/recuperado', 'datos/valor-inicial'], how: 'Qué parte del valor creado del grupo ya se recuperó. Se calcula con los totales del grupo, no promediando el porcentaje de cada cartera.', formula: 'Recuperado ÷ Valor creado', fallback: 'Si el valor creado del grupo es 0, se muestra 0 %.' }
+      };
+      const columns = (...ids) => ids.map(id => ({ id, ...groupColumns[id] }));
+      const ageRanges = '0-90 dias, 91-180 dias, 181-365 dias, 1-2 anos (366 a 730 días) y Mas de 2 anos (más de 730 días)';
+
+      const views = [
+        { id: 'pantalla', group: 'En pantalla', short: 'Indicadores', title: 'Indicadores en pantalla', desc: 'Los datos que aparecen en esta página al terminar «Generar informe», antes de descargar el Excel.', facts: [['Alcance', 'todas las carteras de todos los archivos cargados, sin duplicados']], items: [
+          { id: 'registros', name: 'Registros consolidados', kind: 'calc', src: ['~Cada objeto de los archivos JSON', 'reglas/archivos'], how: 'Cantidad de carteras leídas, sumando todos los archivos seleccionados. Si la misma cartera (mismo `id`) aparece más de una vez, se cuenta una sola.', formula: 'CONTAR(carteras sin duplicados)', fallback: 'Si se descartó algún duplicado, al lado se indica cuántos.' },
+          { id: 'creado', name: 'Cartera creada', kind: 'calc', src: ['datos/valor-inicial'], how: 'Suma del valor inicial de todas las carteras, sin importar su estado (pendientes, pagadas y anuladas).', formula: 'SUMA(Valor inicial)' },
+          { id: 'recuperado', name: 'Recuperado', kind: 'calc', src: ['datos/recuperado'], how: 'Suma de lo recuperado en todas las carteras, sin importar su estado.', formula: 'SUMA(Recuperado)' },
+          { id: 'saldo', name: 'Saldo en riesgo', kind: 'calc', src: ['datos/saldo', 'datos/estado'], how: 'Suma del saldo por recuperar, solo de las carteras pendientes: lo que sigue abierto por cobrar. Es el mismo valor que «SALDO EN RIESGO (vigentes)» de la hoja Resumen.', formula: 'SUMA(Saldo por recuperar) donde Estado = Pendiente' },
+          { id: 'pct', name: 'Recuperación global', kind: 'calc', src: ['pantalla/recuperado', 'pantalla/creado'], how: 'Porcentaje de la cartera creada que ya se recuperó. Se muestra con un decimal.', formula: 'Recuperado ÷ Cartera creada × 100', fallback: 'Si la cartera creada es 0, se muestra 0 %.' },
+          { id: 'clientes', name: 'Clientes distintos', kind: 'calc', src: ['datos/cliente'], how: 'Cantidad de nombres de cliente diferentes. Los nombres se comparan exactamente: una diferencia de tildes, espacios o mayúsculas cuenta como otro cliente.', formula: 'CONTAR DISTINTOS(Cliente)', fallback: 'Las carteras sin cliente cuentan como un cliente más, llamado «Sin cliente».' },
+          { id: 'pendientes', name: 'Carteras pendientes', kind: 'calc', src: ['datos/estado'], how: 'Cantidad de carteras con estado Pendiente.', formula: 'CONTAR(Estado = Pendiente)' }
+        ] },
+        { id: 'resumen', group: 'Libro Excel', short: 'Resumen', title: 'Hoja Resumen', desc: 'Primera hoja del Excel: los totales generales de la cartera, en el mismo orden en que aparecen.', facts: [['Cada fila', 'un indicador'], ['Vigentes', 'solo cuentan las carteras pendientes']], items: [
+          { id: 'fecha-corte', name: 'Fecha de corte del informe', kind: 'app', src: ['~Reloj de tu equipo'], how: 'Fecha en que se generó el informe, tomada del reloj de tu equipo. No viene del JSON.' },
+          { id: 'registros', name: 'Registros en la base', kind: 'calc', src: ['~Cada objeto de los archivos JSON', 'reglas/archivos'], how: 'Cantidad de carteras leídas, sumando todos los archivos seleccionados. Si la misma cartera (mismo `id`) aparece más de una vez, se cuenta una sola. Coincide con el número de filas de la hoja Datos.', formula: 'CONTAR(carteras sin duplicados)' },
+          { id: 'duplicados', name: 'Duplicados descartados', kind: 'calc', src: ['campos/id', 'reglas/archivos'], how: 'Cuántos registros repetidos (mismo `id`) se quitaron antes de calcular el informe. Es 0 si no hubo repetidos.', formula: 'Registros leídos − Registros en la base' },
+          { id: 'creado', name: 'Cartera total creada', kind: 'calc', src: ['datos/valor-inicial'], how: 'Suma del valor inicial de todas las carteras, en cualquier estado.', formula: 'SUMA(Valor inicial)' },
+          { id: 'recuperado', name: 'Total recuperado', kind: 'calc', src: ['datos/recuperado'], how: 'Suma de lo recuperado en todas las carteras, en cualquier estado.', formula: 'SUMA(Recuperado)' },
+          { id: 'saldo', name: 'Saldo pendiente por recuperar', kind: 'calc', src: ['datos/saldo'], how: 'Suma del saldo por recuperar de todas las carteras, incluidas las pagadas y las anuladas.', formula: 'SUMA(Saldo por recuperar)', note: 'Para ver solo lo que sigue abierto, usa «SALDO EN RIESGO (vigentes)».' },
+          { id: 'pct', name: '% de recuperacion global', kind: 'calc', src: ['resumen/recuperado', 'resumen/creado'], how: 'Qué parte de la cartera creada ya se recuperó.', formula: 'Total recuperado ÷ Cartera total creada', fallback: 'Si la cartera creada es 0, se muestra 0 %.' },
+          { id: 'vigentes', name: 'Carteras VIGENTES (pendientes)', kind: 'calc', src: ['datos/estado'], how: 'Cantidad de carteras con estado Pendiente.', formula: 'CONTAR(Estado = Pendiente)' },
+          { id: 'vig-creado', name: 'Valor creado (vigentes)', kind: 'calc', src: ['datos/valor-inicial', 'datos/estado'], how: 'Suma del valor inicial, solo de las carteras pendientes.', formula: 'SUMA(Valor inicial) donde Estado = Pendiente' },
+          { id: 'vig-recuperado', name: 'Valor recuperado (vigentes)', kind: 'calc', src: ['datos/recuperado', 'datos/estado'], how: 'Suma de lo recuperado, solo de las carteras pendientes.', formula: 'SUMA(Recuperado) donde Estado = Pendiente' },
+          { id: 'vig-saldo', name: 'SALDO EN RIESGO (vigentes)', kind: 'calc', src: ['datos/saldo', 'datos/estado'], how: 'Suma del saldo por recuperar, solo de las carteras pendientes. Es lo que sigue abierto por cobrar y coincide con «Saldo en riesgo» de la pantalla.', formula: 'SUMA(Saldo por recuperar) donde Estado = Pendiente' },
+          { id: 'vig-pct', name: '% recuperacion (vigentes)', kind: 'calc', src: ['resumen/vig-recuperado', 'resumen/vig-creado'], how: 'Qué parte del valor creado de las carteras pendientes ya se recuperó.', formula: 'Valor recuperado (vigentes) ÷ Valor creado (vigentes)', fallback: 'Si el valor creado de las vigentes es 0, se muestra 0 %.' },
+          { id: 'pagadas', name: 'Carteras PAGADAS', kind: 'calc', src: ['datos/estado'], how: 'Cantidad de carteras con estado Pagada.', formula: 'CONTAR(Estado = Pagada)' },
+          { id: 'anuladas', name: 'Carteras ANULADAS', kind: 'calc', src: ['datos/estado'], how: 'Cantidad de carteras con estado Anulada.', formula: 'CONTAR(Estado = Anulada)' },
+          { id: 'anulado', name: 'Valor anulado (no recuperable)', kind: 'calc', src: ['datos/saldo', 'datos/estado'], how: 'Lo que quedó sin recuperar en las carteras anuladas: su valor inicial menos lo que se alcanzó a recuperar.', formula: 'SUMA(Saldo por recuperar) donde Estado = Anulada' },
+          { id: 'ticket', name: 'Ticket promedio por cartera', kind: 'calc', src: ['datos/valor-inicial'], how: 'Valor inicial promedio de todas las carteras, incluidas las pagadas y las anuladas.', formula: 'PROMEDIO(Valor inicial)' },
+          { id: 'maxima', name: 'Cartera mas alta registrada', kind: 'calc', src: ['datos/valor-inicial'], how: 'El valor inicial más alto entre todas las carteras.', formula: 'MÁXIMO(Valor inicial)' },
+          { id: 'clientes', name: 'Clientes distintos', kind: 'calc', src: ['datos/cliente'], how: 'Cantidad de nombres de cliente diferentes. Los nombres se comparan exactamente: una diferencia de tildes, espacios o mayúsculas cuenta como otro cliente.', formula: 'CONTAR DISTINTOS(Cliente)', fallback: 'Las carteras sin cliente cuentan como un cliente más, llamado «Sin cliente».' },
+          { id: 'notas', name: 'Notas metodologicas', kind: 'app', how: 'Texto fijo que resume las reglas del informe. Es igual en todos los informes y no cambia con los datos.' }
+        ] },
+        { id: 'datos', group: 'Libro Excel', short: 'Datos', title: 'Hoja Datos', desc: 'La base completa, ya limpia: una fila por cada cartera leída, sin duplicados. Todas las demás hojas se calculan a partir de estas columnas.', facts: [['Cada fila', 'una cartera del JSON'], ['Orden', 'fecha de creación más reciente primero; las que no tienen fecha, al final']], items: [
+          { id: 'consecutivo', name: 'Consecutivo', kind: 'json', src: ['consecutive'], how: 'Número consecutivo de la cartera, tal como viene.', fallback: 'Si viene vacío, la celda queda vacía.' },
+          { id: 'placa', name: 'Placa', kind: 'json', src: ['licensePlate'], how: 'Placa del vehículo, tal como viene.', fallback: 'Si viene vacía, la celda queda vacía.' },
+          { id: 'cliente', name: 'Cliente', kind: 'json', src: ['companyName'], how: 'Nombre del cliente (empresa), tal como viene.', fallback: 'Si viene vacío, se escribe «Sin cliente».' },
+          { id: 'fecha', name: 'Fecha creacion', kind: 'json', src: ['creationDate'], how: 'Fecha de creación de la cartera. Se toman solo los 10 primeros caracteres (AAAA-MM-DD) y se ignora la hora, para que el día no cambie por la zona horaria.', fallback: 'Si viene vacía o no es una fecha válida, la celda queda vacía y la cartera cuenta como «Sin fecha» en las demás hojas.' },
+          { id: 'anio', name: 'Ano', kind: 'calc', src: ['datos/fecha'], how: 'Año de la fecha de creación.', fallback: 'Si no hay fecha, la celda queda vacía.' },
+          { id: 'valor-inicial', name: 'Valor inicial (COP)', kind: 'json', src: ['amountInitial'], how: 'Valor con el que se creó la cartera, tal como viene.', fallback: 'Si viene vacío, se toma 0.' },
+          { id: 'recuperado', name: 'Recuperado (COP)', kind: 'json', src: ['amountReceived'], how: 'Valor que ya se recuperó de la cartera, tal como viene.', fallback: 'Si viene vacío, se toma 0.' },
+          { id: 'saldo', name: 'Saldo por recuperar (COP)', kind: 'calc', src: ['datos/valor-inicial', 'datos/recuperado'], how: 'Lo que falta por recuperar de la cartera. Puede ser negativo si se recuperó más que el valor inicial.', formula: 'Valor inicial − Recuperado' },
+          { id: 'pct', name: '% Recuperado', kind: 'calc', src: ['datos/recuperado', 'datos/valor-inicial'], how: 'Qué parte del valor inicial de la cartera ya se recuperó.', formula: 'Recuperado ÷ Valor inicial', fallback: 'Si el valor inicial es 0, se muestra 0 %.' },
+          { id: 'estado', name: 'Estado', kind: 'json', src: ['state.description', 'reglas/estados'], how: 'Estado de la cartera traducido al español: `paid` se convierte en Pagada, `deleted` en Anulada y cualquier otro valor en Pendiente.', fallback: 'Si viene vacío, se toma como Pendiente.' },
+          { id: 'antiguedad-dias', name: 'Antiguedad (dias)', kind: 'calc', src: ['datos/fecha', '~Fecha de hoy'], how: 'Días transcurridos desde la fecha de creación hasta el día en que generas el informe. Cambia si generas el mismo archivo otro día.', formula: 'Hoy − Fecha creacion (en días)', fallback: 'Si no hay fecha, la celda queda vacía.' },
+          { id: 'rango', name: 'Rango antiguedad', kind: 'calc', src: ['datos/antiguedad-dias'], how: `Agrupa los días de antigüedad en cinco rangos: ${ageRanges}.`, fallback: 'Si no hay fecha, se escribe «Sin fecha».' },
+          { id: 'creado-por', name: 'Creado por', kind: 'json', src: ['whoCreates.name'], how: 'Nombre de la persona que creó la cartera. Es el «gestor» de la hoja PorGestor.', fallback: 'Si viene vacío, se escribe «Sin asignar».' },
+          { id: 'reportado-por', name: 'Reportado por', kind: 'json', src: ['whoReports.name'], how: 'Nombre de la persona que reportó la cartera. Solo aparece en esta hoja.', fallback: 'Si viene vacío, se escribe «Sin asignar».' },
+          { id: 'deudor', name: 'Deudor', kind: 'json', src: ['ownerDocument'], how: 'Número de documento del propietario del vehículo (no su nombre).', fallback: 'Si viene vacío, la celda queda vacía y la cartera no aparece en TopDeudores.' },
+          { id: 'cuotas', name: 'Cuotas', kind: 'json', src: ['installments'], how: 'Número de cuotas de la cartera, tal como viene.', fallback: 'Si viene vacío, se toma 0.' },
+          { id: 'cuotas-pendientes', name: 'Cuotas pendientes', kind: 'json', src: ['pendingInstallments'], how: 'Número de cuotas que faltan por pagar, tal como viene.', fallback: 'Si viene vacío, se toma 0.' },
+          { id: 'motivo', name: 'Motivo', kind: 'json', src: ['reason'], how: 'Motivo o causa registrada en la cartera, tal como viene.', fallback: 'Si viene vacío, se escribe «Sin motivo».' }
+        ] },
+        { id: 'porcliente', group: 'Libro Excel', short: 'PorCliente', title: 'Hoja PorCliente', desc: 'Totales agrupados por cliente.', facts: [['Cada fila', 'un cliente'], ['Orden', 'mayor saldo pendiente primero']], items: [
+          { id: 'cliente', name: 'Cliente', kind: 'json', src: ['datos/cliente'], how: 'Cada nombre de cliente distinto forma una fila. Los nombres se comparan exactamente: una diferencia de tildes, espacios o mayúsculas crea otra fila.', fallback: 'Las carteras sin cliente se agrupan en la fila «Sin cliente».' },
+          ...columns('carteras', 'pendientes', 'saldo-pendiente', 'creado', 'recuperado', 'pct')
+        ] },
+        { id: 'porestado', group: 'Libro Excel', short: 'PorEstado', title: 'Hoja PorEstado', desc: 'Totales agrupados por estado de la cartera.', facts: [['Cada fila', 'un estado'], ['Orden', 'Pendiente, Pagada, Anulada']], items: [
+          { id: 'estado', name: 'Estado', kind: 'json', src: ['datos/estado', 'reglas/estados'], how: 'Estado traducido de cada cartera: Pendiente, Pagada o Anulada. Solo aparecen los estados que existan en los archivos.' },
+          ...columns('carteras', 'creado', 'recuperado', 'saldo', 'pct')
+        ] },
+        { id: 'poranio', group: 'Libro Excel', short: 'PorAnio', title: 'Hoja PorAnio', desc: 'Totales agrupados por año de creación de la cartera.', facts: [['Cada fila', 'un año'], ['Orden', 'año más antiguo primero; «Sin fecha» al final']], items: [
+          { id: 'anio', name: 'Ano', kind: 'calc', src: ['datos/anio'], how: 'Año de la fecha de creación. Cada año distinto forma una fila.', fallback: 'Las carteras sin fecha se agrupan en la fila «Sin fecha».' },
+          ...columns('carteras', 'creado', 'recuperado', 'saldo', 'pct')
+        ] },
+        { id: 'antiguedad', group: 'Libro Excel', short: 'Antiguedad', title: 'Hoja Antiguedad', desc: 'Totales agrupados por cuánto tiempo lleva creada la cartera. Esta hoja no tiene columna de % recuperado.', facts: [['Cada fila', 'un rango de antigüedad'], ['Orden', 'del más reciente al más antiguo; «Sin fecha» al final']], items: [
+          { id: 'rango', name: 'Rango antiguedad', kind: 'calc', src: ['datos/rango'], how: `El mismo rango de la hoja Datos: ${ageRanges}. Solo aparecen los rangos que tengan carteras.`, fallback: 'Las carteras sin fecha se agrupan en la fila «Sin fecha».' },
+          ...columns('carteras', 'pendientes', 'saldo-pendiente', 'creado', 'recuperado')
+        ] },
+        { id: 'porcausa', group: 'Libro Excel', short: 'PorCausa', title: 'Hoja PorCausa', desc: 'Totales agrupados por el motivo registrado en cada cartera.', facts: [['Cada fila', 'un motivo'], ['Orden', 'mayor saldo pendiente primero']], items: [
+          { id: 'causa', name: 'Causa', kind: 'json', src: ['datos/motivo'], how: 'Cada texto de motivo distinto forma una fila. Los textos se comparan exactamente.', fallback: 'Las carteras sin motivo se agrupan en la fila «Sin motivo».' },
+          ...columns('carteras', 'pendientes', 'saldo-pendiente', 'creado', 'recuperado', 'pct')
+        ] },
+        { id: 'topdeudores', group: 'Libro Excel', short: 'TopDeudores', title: 'Hoja TopDeudores', desc: 'Los deudores con más saldo pendiente, identificados por su número de documento.', facts: [['Cada fila', 'un documento de deudor'], ['Filtro', 'solo carteras con documento; máximo 100 filas'], ['Orden', 'mayor saldo pendiente primero']], items: [
+          { id: 'deudor', name: 'Deudor', kind: 'json', src: ['datos/deudor'], how: 'Número de documento del propietario del vehículo. Cada documento distinto forma una fila.', fallback: 'Las carteras sin documento no aparecen en esta hoja.' },
+          ...columns('carteras', 'pendientes', 'saldo-pendiente', 'creado', 'recuperado', 'pct')
+        ] },
+        { id: 'porgestor', group: 'Libro Excel', short: 'PorGestor', title: 'Hoja PorGestor', desc: 'Totales agrupados por la persona que creó cada cartera.', facts: [['Cada fila', 'una persona'], ['Orden', 'mayor saldo primero (todos los estados)']], items: [
+          { id: 'gestor', name: 'Gestor', kind: 'json', src: ['datos/creado-por'], how: 'Nombre de quien creó la cartera (no de quien la reportó). Cada nombre distinto forma una fila.', fallback: 'Las carteras sin creador se agrupan en la fila «Sin asignar».' },
+          ...columns('carteras', 'creado', 'recuperado', 'saldo', 'pct')
+        ] },
+        { id: 'campos', group: 'Referencia', short: 'Campos del JSON', title: 'Campos del JSON', desc: 'El camino al revés: cada campo que se lee del archivo y en qué partes del informe aparece. Un punto indica un campo dentro de otro; por ejemplo, `state.description` es el campo `description` dentro de `state`.', items: [
+          { id: 'consecutive', name: 'consecutive', code: true, how: 'Número consecutivo de la cartera.', uses: ['datos/consecutivo'] },
+          { id: 'licensePlate', name: 'licensePlate', code: true, how: 'Placa del vehículo.', uses: ['datos/placa'] },
+          { id: 'companyName', name: 'companyName', code: true, how: 'Nombre del cliente.', uses: ['datos/cliente', 'porcliente/cliente', 'pantalla/clientes', 'resumen/clientes'] },
+          { id: 'creationDate', name: 'creationDate', code: true, how: 'Fecha de creación. Solo se leen los primeros 10 caracteres (AAAA-MM-DD).', uses: ['datos/fecha', 'datos/anio', 'datos/antiguedad-dias', 'datos/rango', 'poranio/anio', 'antiguedad/rango'] },
+          { id: 'amountInitial', name: 'amountInitial', code: true, how: 'Valor inicial de la cartera. Es la base de todos los «valor creado», del saldo y de los porcentajes.', uses: ['datos/valor-inicial', 'datos/saldo', 'datos/pct', 'pantalla/creado', 'resumen/creado', 'resumen/ticket', 'resumen/maxima'] },
+          { id: 'amountReceived', name: 'amountReceived', code: true, how: 'Valor recuperado. Es la base de todos los «recuperado», del saldo y de los porcentajes.', uses: ['datos/recuperado', 'datos/saldo', 'datos/pct', 'pantalla/recuperado', 'resumen/recuperado'] },
+          { id: 'state', name: 'state.description', code: true, how: 'Estado de la cartera. Decide si cuenta como pendiente, pagada o anulada.', uses: ['datos/estado', 'reglas/estados', 'porestado/estado', 'pantalla/pendientes', 'resumen/vigentes', 'resumen/pagadas', 'resumen/anuladas'] },
+          { id: 'whoCreates', name: 'whoCreates.name', code: true, how: 'Nombre de quien creó la cartera.', uses: ['datos/creado-por', 'porgestor/gestor'] },
+          { id: 'whoReports', name: 'whoReports.name', code: true, how: 'Nombre de quien reportó la cartera.', uses: ['datos/reportado-por'] },
+          { id: 'ownerDocument', name: 'ownerDocument', code: true, how: 'Documento del propietario del vehículo. El informe lo usa como «deudor».', uses: ['datos/deudor', 'topdeudores/deudor'] },
+          { id: 'installments', name: 'installments', code: true, how: 'Número de cuotas de la cartera.', uses: ['datos/cuotas'] },
+          { id: 'pendingInstallments', name: 'pendingInstallments', code: true, how: 'Número de cuotas que faltan por pagar.', uses: ['datos/cuotas-pendientes'] },
+          { id: 'id', name: 'id', code: true, how: 'Identificador único de la cartera. No aparece como columna: sirve para detectar carteras repetidas.', uses: ['reglas/archivos', 'resumen/duplicados'] },
+          { id: 'reason', name: 'reason', code: true, how: 'Motivo o causa de la cartera.', uses: ['datos/motivo', 'porcausa/causa'] },
+          { id: 'otros', name: 'Cualquier otro campo', how: 'Se ignora. Por ejemplo, no se usan `driverDocument`, `cargoId`, `companyId`, `modifications`, `debtor`, `receivableType`, `message` ni `state.active`.' }
+        ] },
+        { id: 'reglas', group: 'Referencia', short: 'Reglas generales', title: 'Reglas generales', desc: 'Criterios que se aplican a todo el informe.', items: [
+          { id: 'archivos', name: 'Varios archivos y duplicados', how: 'Todos los archivos seleccionados se unen en una sola base, emparejando los campos por su nombre. Si la misma cartera (mismo `id`) aparece más de una vez, se conserva una sola: la del archivo modificado más recientemente en tu equipo; si empatan, la del último archivo de la lista.', fallback: 'Los registros sin `id` no se pueden comparar y se conservan todos. Cuántos duplicados se quitaron aparece al generar el informe y en la hoja Resumen.' },
+          { id: 'estados', name: 'Cómo se decide el estado', how: 'Se lee `state.description` sin distinguir mayúsculas y minúsculas:', list: ['`paid` → Pagada', '`deleted` → Anulada', 'Cualquier otro valor (por ejemplo `pending`) o vacío → Pendiente. En la hoja Resumen, «vigentes» significa pendientes.'] },
+          { id: 'vacios', name: 'Datos que vienen vacíos', how: 'Cuando un campo no viene en el JSON o viene vacío, se usa este valor:', list: ['Cliente → «Sin cliente»', 'Creado por y Reportado por → «Sin asignar»', 'Motivo → «Sin motivo»', 'Valor inicial y Recuperado → 0', 'Cuotas y Cuotas pendientes → 0', 'Placa, Consecutivo y Deudor → celda vacía', 'Fecha → celda vacía; se agrupa como «Sin fecha»'] },
+          { id: 'fechas', name: 'Fechas y zona horaria', how: 'De `creationDate` se toman solo los 10 primeros caracteres (AAAA-MM-DD). Así el día no cambia por la hora ni por la zona horaria de origen.' },
+          { id: 'hoy', name: 'Antigüedad y fecha de hoy', how: 'La antigüedad se mide contra el día en que generas el informe. Si generas el mismo archivo otro día, los días y los rangos de antigüedad cambian.' },
+          { id: 'moneda', name: 'Moneda y redondeo', how: 'Los valores se usan tal como vienen en el JSON, en pesos colombianos (COP); no se convierten. En pantalla y en el Excel se muestran sin decimales, pero el Excel guarda el valor completo.' },
+          { id: 'porcentajes', name: 'Porcentajes', how: 'Los % de cada grupo se calculan con los totales del grupo (recuperado ÷ valor creado), no como el promedio de los % de cada cartera. Si el valor creado es 0, se muestra 0 %.' },
+          { id: 'privacidad', name: 'Dónde se calcula', how: 'Todo el cálculo ocurre en tu navegador con DuckDB-WASM. Los archivos no se envían a ningún servidor.' }
+        ] }
+      ];
+
+      const index = new Map();
+      for (const view of views) for (const item of view.items) index.set(`${view.id}/${item.id}`, { view, item });
+
+      const nav = document.getElementById('lineage-nav');
+      const out = document.getElementById('lineage-view');
+      const search = document.getElementById('lineage-search');
+      const panel = document.getElementById('lineage-panel');
+      const announcer = document.getElementById('lineage-status');
+      const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let current = 'pantalla';
+
+      const esc = text => String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      const fmt = text => esc(text).replace(/`([^`]+)`/g, '<code class="field">$1</code>');
+      const norm = text => String(text).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+      const refLabel = (ref, viewId) => { const target = index.get(ref); return target.view.id === viewId ? target.item.name : `${target.view.short} · ${target.item.name}`; };
+
+      for (const [key, { view, item }] of index) {
+        const refs = [...(item.src || []), ...(item.uses || [])].map(ref => ref.startsWith('~') ? ref.slice(1) : ref.includes('/') ? refLabel(ref, view.id) : ref);
+        item.text = norm([view.short, view.title, item.name, item.how, ...(item.list || []), item.formula, item.fallback, item.note, ...refs].filter(Boolean).join(' '));
+      }
+
+      function source(ref, viewId) {
+        if (ref.startsWith('~')) return `<span class="src-text">${esc(ref.slice(1))}</span>`;
+        if (!ref.includes('/')) return `<code class="field">${esc(ref)}</code>`;
+        const target = index.get(ref);
+        return `<button type="button" class="ref" data-lineage="${esc(ref)}" title="Ir a ${esc(target.view.title)} › ${esc(target.item.name)}">${esc(refLabel(ref, viewId))}</button>`;
+      }
+
+      function entry(view, item) {
+        const refs = (label, list) => list?.length ? `<div class="src"><span class="src-label">${label}</span>${list.map(ref => source(ref, view.id)).join('')}</div>` : '';
+        return `<article class="entry" id="dato-${view.id}-${item.id}" tabindex="-1">
+          <div><h4 class="entry-name">${item.code ? `<code>${esc(item.name)}</code>` : esc(item.name)}</h4>${KINDS[item.kind] ? `<span class="badge ${item.kind}">${KINDS[item.kind]}</span>` : ''}</div>
+          <div class="entry-body">
+            ${refs('Sale de', item.src)}
+            <p>${fmt(item.how)}</p>
+            ${item.list ? `<ul class="entry-list">${item.list.map(line => `<li>${fmt(line)}</li>`).join('')}</ul>` : ''}
+            ${item.formula ? `<p class="formula">Fórmula<span>${esc(item.formula)}</span></p>` : ''}
+            ${item.fallback ? `<p class="fallback">${fmt(item.fallback)}</p>` : ''}
+            ${item.note ? `<p class="note"><strong>Ojo:</strong> ${fmt(item.note)}</p>` : ''}
+            ${refs('Se usa en', item.uses)}
+          </div>
+        </article>`;
+      }
+
+      function renderNav() {
+        const groups = [...new Set(views.map(view => view.group))];
+        nav.innerHTML = groups.map(group => `<div class="nav-group" role="group" aria-label="${esc(group)}"><span class="nav-label" aria-hidden="true">${esc(group)}</span>${views.filter(view => view.group === group).map(view => `<button type="button" class="nav-item" data-view="${view.id}"><span>${esc(view.short)}</span><span class="nav-count" aria-label="${view.items.length} datos">${view.items.length}</span></button>`).join('')}</div>`).join('');
+      }
+
+      function render() {
+        const query = search.value.trim();
+        nav.querySelectorAll('[data-view]').forEach(button => button.setAttribute('aria-current', String(!query && button.dataset.view === current)));
+        if (!query) {
+          const view = views.find(item => item.id === current);
+          out.innerHTML = `<h3 class="view-title">${esc(view.title)}</h3><p class="view-desc">${fmt(view.desc)}</p>${view.facts ? `<ul class="facts">${view.facts.map(([label, text]) => `<li><b>${esc(label)}:</b> ${fmt(text)}</li>`).join('')}</ul>` : ''}<div class="entries">${view.items.map(item => entry(view, item)).join('')}</div>`;
+          announcer.textContent = '';
+          return;
+        }
+        const words = norm(query).split(/\s+/);
+        const groups = views.map(view => ({ view, items: view.items.filter(item => words.every(word => item.text.includes(word))) })).filter(group => group.items.length);
+        const total = groups.reduce((sum, group) => sum + group.items.length, 0);
+        const summary = `${total} resultado${total === 1 ? '' : 's'} para «${query}»`;
+        out.innerHTML = total
+          ? `<p class="results-count">${esc(summary)}</p>${groups.map(group => `<section class="result-group"><h3 class="result-title"><button type="button" data-lineage="${group.view.id}">${esc(group.view.title)} ›</button></h3><div class="entries">${group.items.map(item => entry(group.view, item)).join('')}</div></section>`).join('')}`
+          : `<div class="no-results"><strong>No encontramos «${esc(query)}».</strong><p>Prueba con otra palabra, por ejemplo: saldo, cliente, fecha o estado.</p></div>`;
+        announcer.textContent = total ? summary : `Sin resultados para «${query}»`;
+      }
+
+      function go(viewId, itemId, scroll) {
+        if (!views.some(view => view.id === viewId)) return;
+        search.value = '';
+        current = viewId;
+        render();
+        const target = itemId && document.getElementById(`dato-${viewId}-${itemId}`);
+        if (scroll) (target || panel).scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: target ? 'center' : 'start' });
+        if (target) {
+          target.focus({ preventScroll: true });
+          target.classList.add('flash');
+          setTimeout(() => target.classList.remove('flash'), 1800);
+        }
+      }
+
+      nav.addEventListener('click', event => {
+        const button = event.target.closest('[data-view]');
+        if (button) go(button.dataset.view, null, panel.getBoundingClientRect().top < 0);
+      });
+      search.addEventListener('input', render);
+      document.addEventListener('click', event => {
+        const link = event.target.closest('[data-lineage]');
+        if (!link) return;
+        event.preventDefault();
+        const [viewId, itemId] = link.dataset.lineage.split('/');
+        go(viewId, itemId, true);
+      });
+
+      renderNav();
+      render();
+    })();
+  </script>
 
   <script type="module">
     import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.0/+esm';
     import * as XLSX from 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm';
 
-    const state = { files: [], db: null, conn: null, workbook: null, rows: 0, loading: false };
+    const state = { files: [], db: null, conn: null, workbook: null, rows: 0, duplicates: 0, loading: false };
     const el = Object.fromEntries(['file-input','file-list','drop-zone','generate','engine-status','engine-text','status','status-title','status-count','stage-list','error','report','report-copy','metrics','download'].map(id => [id.replaceAll('-', '_'), document.getElementById(id)]));
     const money = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
     const integer = new Intl.NumberFormat('es-CO');
@@ -158,6 +481,8 @@
       return table.toArray().map(row => typeof row.toJSON === 'function' ? row.toJSON() : row);
     }
     function value(row, key) { const result = row[key]; return typeof result === 'bigint' ? Number(result) : result == null ? null : result; }
+    // DuckDB entrega DATE como milisegundos desde 1970; Excel espera días desde 1899-12-30.
+    function excelDate(ms) { return ms == null ? null : Number(ms instanceof Date ? ms.getTime() : ms) / 86400000 + 25569; }
     function rowsToArray(rows, columns) { return rows.map(row => columns.map(([key, transform]) => transform ? transform(value(row, key)) : value(row, key))); }
 
     async function registerFiles() {
@@ -169,7 +494,7 @@
         const first = text.trim()[0];
         if (first !== '[' && first !== '{') throw new Error(`${file.name} no contiene JSON válido.`);
         await state.db.registerFileText(filename, text);
-        tables.push(`SELECT * FROM read_json_auto(${sqlText(filename)}, union_by_name = true)`);
+        tables.push(`SELECT *, ${index} AS __archivo, ${Number(file.lastModified) || 0} AS __modificado FROM read_json_auto(${sqlText(filename)}, union_by_name = true)`);
         status('Cargando archivos locales', `${index + 1} de ${state.files.length}`);
         await yieldFrame();
       }
@@ -177,8 +502,16 @@
     }
 
     async function createNormalizedTable() {
+      // id, installments y pendingInstallments pueden faltar en exportaciones antiguas: si no existen se leen como NULL.
+      const columns = new Set((await queryRows(`SELECT column_name FROM information_schema.columns WHERE table_name = 'cartera_raw'`)).map(row => row.column_name));
+      const optional = (column, expression) => columns.has(column) ? expression : 'NULL';
+      // Una cartera (mismo id) repetida en varios archivos se conserva una sola vez: la del archivo modificado más recientemente.
       await state.conn.query(`
         CREATE OR REPLACE TABLE cartera AS
+        WITH versiones AS (
+          SELECT *, row_number() OVER (PARTITION BY __clave ORDER BY __modificado DESC, __archivo DESC) AS __version
+          FROM (SELECT *, ${optional('id', "NULLIF(CAST(id AS VARCHAR), '')")} AS __clave FROM cartera_raw)
+        )
         SELECT
           CAST(consecutive AS VARCHAR) AS consecutivo,
           COALESCE(CAST(licensePlate AS VARCHAR), '') AS placa,
@@ -194,10 +527,11 @@
           COALESCE(CAST(whoCreates.name AS VARCHAR), 'Sin asignar') AS creado_por,
           COALESCE(CAST(whoReports.name AS VARCHAR), 'Sin asignar') AS reportado_por,
           COALESCE(CAST(ownerDocument AS VARCHAR), '') AS deudor,
-          COALESCE(array_length(modifications), 0) AS cuotas,
-          0 AS cuotas_pendientes,
+          COALESCE(${optional('installments', 'try_cast(installments AS INTEGER)')}, 0) AS cuotas,
+          COALESCE(${optional('pendingInstallments', 'try_cast(pendingInstallments AS INTEGER)')}, 0) AS cuotas_pendientes,
           COALESCE(CAST(reason AS VARCHAR), 'Sin motivo') AS motivo
-        FROM cartera_raw
+        FROM versiones
+        WHERE __clave IS NULL OR __version = 1
       `);
       await state.conn.query(`
         CREATE OR REPLACE VIEW cartera_informe AS
@@ -218,14 +552,14 @@
     }
 
     const aggregateQueries = {
-      resumen: `SELECT count(*) AS registros, coalesce(sum(valor_inicial),0) AS creado, coalesce(sum(recuperado),0) AS recuperado, coalesce(sum(saldo_por_recuperar),0) AS saldo, coalesce(sum(CASE WHEN estado = 'Pendiente' THEN valor_inicial ELSE 0 END),0) AS vigente_creado, coalesce(sum(CASE WHEN estado = 'Pendiente' THEN recuperado ELSE 0 END),0) AS vigente_recuperado, coalesce(sum(CASE WHEN estado = 'Pendiente' THEN saldo_por_recuperar ELSE 0 END),0) AS vigente_saldo, sum(CASE WHEN estado = 'Pendiente' THEN 1 ELSE 0 END) AS pendientes, sum(CASE WHEN estado = 'Pagada' THEN 1 ELSE 0 END) AS pagadas, sum(CASE WHEN estado = 'Anulada' THEN 1 ELSE 0 END) AS anuladas, coalesce(sum(CASE WHEN estado = 'Anulada' THEN saldo_por_recuperar ELSE 0 END),0) AS anulado, coalesce(avg(valor_inicial),0) AS ticket, coalesce(max(valor_inicial),0) AS maxima, count(DISTINCT cliente) AS clientes FROM cartera_informe`,
+      resumen: `SELECT count(*) AS registros, coalesce(sum(valor_inicial),0) AS creado, coalesce(sum(recuperado),0) AS recuperado, coalesce(sum(saldo_por_recuperar),0) AS saldo, coalesce(sum(CASE WHEN estado = 'Pendiente' THEN valor_inicial ELSE 0 END),0) AS vigente_creado, coalesce(sum(CASE WHEN estado = 'Pendiente' THEN recuperado ELSE 0 END),0) AS vigente_recuperado, coalesce(sum(CASE WHEN estado = 'Pendiente' THEN saldo_por_recuperar ELSE 0 END),0) AS vigente_saldo, count(*) FILTER (WHERE estado = 'Pendiente') AS pendientes, count(*) FILTER (WHERE estado = 'Pagada') AS pagadas, count(*) FILTER (WHERE estado = 'Anulada') AS anuladas, coalesce(sum(CASE WHEN estado = 'Anulada' THEN saldo_por_recuperar ELSE 0 END),0) AS anulado, coalesce(avg(valor_inicial),0) AS ticket, coalesce(max(valor_inicial),0) AS maxima, count(DISTINCT cliente) AS clientes FROM cartera_informe`,
       datos: `SELECT consecutivo, placa, cliente, fecha_creacion, year(fecha_creacion) AS anio, valor_inicial, recuperado, saldo_por_recuperar, porcentaje_recuperado, estado, antiguedad_dias, rango_antiguedad, creado_por, reportado_por, deudor, cuotas, cuotas_pendientes, motivo FROM cartera_informe ORDER BY fecha_creacion DESC NULLS LAST, consecutivo`,
-      cliente: `SELECT cliente, count(*) AS carteras, sum(CASE WHEN estado='Pendiente' THEN 1 ELSE 0 END) AS pendientes, sum(CASE WHEN estado='Pendiente' THEN saldo_por_recuperar ELSE 0 END) AS saldo_pendiente, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado, CASE WHEN sum(valor_inicial)=0 THEN 0 ELSE sum(recuperado)/sum(valor_inicial) END AS porcentaje_recuperado FROM cartera_informe GROUP BY cliente ORDER BY saldo_pendiente DESC`,
+      cliente: `SELECT cliente, count(*) AS carteras, count(*) FILTER (WHERE estado = 'Pendiente') AS pendientes, sum(CASE WHEN estado='Pendiente' THEN saldo_por_recuperar ELSE 0 END) AS saldo_pendiente, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado, CASE WHEN sum(valor_inicial)=0 THEN 0 ELSE sum(recuperado)/sum(valor_inicial) END AS porcentaje_recuperado FROM cartera_informe GROUP BY cliente ORDER BY saldo_pendiente DESC`,
       estado: `SELECT estado, count(*) AS carteras, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado, sum(saldo_por_recuperar) AS saldo, CASE WHEN sum(valor_inicial)=0 THEN 0 ELSE sum(recuperado)/sum(valor_inicial) END AS porcentaje_recuperado FROM cartera_informe GROUP BY estado ORDER BY CASE estado WHEN 'Pendiente' THEN 1 WHEN 'Pagada' THEN 2 ELSE 3 END`,
       anio: `SELECT coalesce(CAST(year(fecha_creacion) AS VARCHAR),'Sin fecha') AS anio, count(*) AS carteras, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado, sum(saldo_por_recuperar) AS saldo, CASE WHEN sum(valor_inicial)=0 THEN 0 ELSE sum(recuperado)/sum(valor_inicial) END AS porcentaje_recuperado FROM cartera_informe GROUP BY year(fecha_creacion) ORDER BY anio`,
-      antiguedad: `SELECT rango_antiguedad, count(*) AS carteras, sum(CASE WHEN estado='Pendiente' THEN 1 ELSE 0 END) AS pendientes, sum(CASE WHEN estado='Pendiente' THEN saldo_por_recuperar ELSE 0 END) AS saldo_pendiente, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado FROM cartera_informe GROUP BY rango_antiguedad ORDER BY CASE rango_antiguedad WHEN '0-90 dias' THEN 1 WHEN '91-180 dias' THEN 2 WHEN '181-365 dias' THEN 3 WHEN '1-2 anos' THEN 4 WHEN 'Mas de 2 anos' THEN 5 ELSE 6 END`,
-      causa: `SELECT motivo, count(*) AS carteras, sum(CASE WHEN estado='Pendiente' THEN 1 ELSE 0 END) AS pendientes, sum(CASE WHEN estado='Pendiente' THEN saldo_por_recuperar ELSE 0 END) AS saldo_pendiente, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado, CASE WHEN sum(valor_inicial)=0 THEN 0 ELSE sum(recuperado)/sum(valor_inicial) END AS porcentaje_recuperado FROM cartera_informe GROUP BY motivo ORDER BY saldo_pendiente DESC`,
-      deudor: `SELECT deudor, count(*) AS carteras, sum(CASE WHEN estado='Pendiente' THEN 1 ELSE 0 END) AS pendientes, sum(CASE WHEN estado='Pendiente' THEN saldo_por_recuperar ELSE 0 END) AS saldo_pendiente, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado, CASE WHEN sum(valor_inicial)=0 THEN 0 ELSE sum(recuperado)/sum(valor_inicial) END AS porcentaje_recuperado FROM cartera_informe WHERE deudor <> '' GROUP BY deudor ORDER BY saldo_pendiente DESC LIMIT 100`,
+      antiguedad: `SELECT rango_antiguedad, count(*) AS carteras, count(*) FILTER (WHERE estado = 'Pendiente') AS pendientes, sum(CASE WHEN estado='Pendiente' THEN saldo_por_recuperar ELSE 0 END) AS saldo_pendiente, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado FROM cartera_informe GROUP BY rango_antiguedad ORDER BY CASE rango_antiguedad WHEN '0-90 dias' THEN 1 WHEN '91-180 dias' THEN 2 WHEN '181-365 dias' THEN 3 WHEN '1-2 anos' THEN 4 WHEN 'Mas de 2 anos' THEN 5 ELSE 6 END`,
+      causa: `SELECT motivo, count(*) AS carteras, count(*) FILTER (WHERE estado = 'Pendiente') AS pendientes, sum(CASE WHEN estado='Pendiente' THEN saldo_por_recuperar ELSE 0 END) AS saldo_pendiente, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado, CASE WHEN sum(valor_inicial)=0 THEN 0 ELSE sum(recuperado)/sum(valor_inicial) END AS porcentaje_recuperado FROM cartera_informe GROUP BY motivo ORDER BY saldo_pendiente DESC`,
+      deudor: `SELECT deudor, count(*) AS carteras, count(*) FILTER (WHERE estado = 'Pendiente') AS pendientes, sum(CASE WHEN estado='Pendiente' THEN saldo_por_recuperar ELSE 0 END) AS saldo_pendiente, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado, CASE WHEN sum(valor_inicial)=0 THEN 0 ELSE sum(recuperado)/sum(valor_inicial) END AS porcentaje_recuperado FROM cartera_informe WHERE deudor <> '' GROUP BY deudor ORDER BY saldo_pendiente DESC LIMIT 100`,
       gestor: `SELECT creado_por, count(*) AS carteras, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado, sum(saldo_por_recuperar) AS saldo, CASE WHEN sum(valor_inicial)=0 THEN 0 ELSE sum(recuperado)/sum(valor_inicial) END AS porcentaje_recuperado FROM cartera_informe GROUP BY creado_por ORDER BY saldo DESC`
     };
 
@@ -254,11 +588,11 @@
       const wb = XLSX.utils.book_new();
       const r = result.resumen[0];
       const summary = [
-        ['INFORME DE CARTERAS - TECLOGI', ''], ['Resumen ejecutivo. Todos los valores en pesos colombianos (COP).', ''], ['Fecha de corte del informe', new Date()], ['Registros en la base', value(r,'registros')], [], ['INDICADOR', 'VALOR'],
+        ['INFORME DE CARTERAS - TECLOGI', ''], ['Resumen ejecutivo. Todos los valores en pesos colombianos (COP).', ''], ['Fecha de corte del informe', new Date()], ['Registros en la base', value(r,'registros')], ['Duplicados descartados', state.duplicates], ['INDICADOR', 'VALOR'],
         ['Cartera total creada', value(r,'creado')], ['Total recuperado', value(r,'recuperado')], ['Saldo pendiente por recuperar', value(r,'saldo')], ['% de recuperacion global', value(r,'creado') ? value(r,'recuperado') / value(r,'creado') : 0], [],
         ['Carteras VIGENTES (pendientes)', value(r,'pendientes')], ['Valor creado (vigentes)', value(r,'vigente_creado')], ['Valor recuperado (vigentes)', value(r,'vigente_recuperado')], ['SALDO EN RIESGO (vigentes)', value(r,'vigente_saldo')], ['% recuperacion (vigentes)', value(r,'vigente_creado') ? value(r,'vigente_recuperado') / value(r,'vigente_creado') : 0], [],
         ['Carteras PAGADAS', value(r,'pagadas')], ['Carteras ANULADAS', value(r,'anuladas')], ['Valor anulado (no recuperable)', value(r,'anulado')], [], ['Ticket promedio por cartera', value(r,'ticket')], ['Cartera mas alta registrada', value(r,'maxima')], ['Clientes distintos', value(r,'clientes')], [],
-        ['Notas metodologicas', ''], ['Saldo por recuperar = Valor inicial - Valor recuperado.', ''], ['Pendiente: state.description diferente de paid o deleted. Pagada: paid. Anulada: deleted.', ''], ['Las carteras anuladas se conservan para trazabilidad.', ''], ['Cuotas pendientes se deja en 0 porque el JSON de origen no identifica una cuota como pendiente.', '']
+        ['Notas metodologicas', ''], ['Saldo por recuperar = Valor inicial - Valor recuperado.', ''], ['Pendiente: state.description diferente de paid o deleted. Pagada: paid. Anulada: deleted.', ''], ['Las carteras anuladas se conservan para trazabilidad.', ''], ['Cuotas y Cuotas pendientes se toman de installments y pendingInstallments.', ''], ['Si una cartera (mismo id) aparece varias veces, se conserva la del archivo modificado mas recientemente.', '']
       ];
       const sheet = XLSX.utils.aoa_to_sheet(summary);
       sheet['!cols'] = [{ wch: 45 }, { wch: 25 }];
@@ -267,7 +601,7 @@
       for (const row of [7,8,9,12,13,14,19,22,23]) { const cell=sheet[`B${row}`]; if(cell) cell.z='$#,##0'; }
       for (const row of [10,15]) { const cell=sheet[`B${row}`]; if(cell) cell.z='0.0%'; }
       XLSX.utils.book_append_sheet(wb, sheet, 'Resumen');
-      createSheet(wb, 'Datos', ['Consecutivo','Placa','Cliente','Fecha creacion','Ano','Valor inicial (COP)','Recuperado (COP)','Saldo por recuperar (COP)','% Recuperado','Estado','Antiguedad (dias)','Rango antiguedad','Creado por','Reportado por','Deudor','Cuotas','Cuotas pendientes','Motivo'], rowsToArray(result.datos, [['consecutivo'],['placa'],['cliente'],['fecha_creacion'],['anio'],['valor_inicial'],['recuperado'],['saldo_por_recuperar'],['porcentaje_recuperado'],['estado'],['antiguedad_dias'],['rango_antiguedad'],['creado_por'],['reportado_por'],['deudor'],['cuotas'],['cuotas_pendientes'],['motivo']]), {dateCols:[3],moneyCols:[5,6,7],percentCols:[8],integerCols:[4,10,15,16],widths:[12,12,32,14,9,18,18,22,14,14,17,18,24,24,18,10,18,46]});
+      createSheet(wb, 'Datos', ['Consecutivo','Placa','Cliente','Fecha creacion','Ano','Valor inicial (COP)','Recuperado (COP)','Saldo por recuperar (COP)','% Recuperado','Estado','Antiguedad (dias)','Rango antiguedad','Creado por','Reportado por','Deudor','Cuotas','Cuotas pendientes','Motivo'], rowsToArray(result.datos, [['consecutivo'],['placa'],['cliente'],['fecha_creacion', excelDate],['anio'],['valor_inicial'],['recuperado'],['saldo_por_recuperar'],['porcentaje_recuperado'],['estado'],['antiguedad_dias'],['rango_antiguedad'],['creado_por'],['reportado_por'],['deudor'],['cuotas'],['cuotas_pendientes'],['motivo']]), {dateCols:[3],moneyCols:[5,6,7],percentCols:[8],integerCols:[4,10,15,16],widths:[12,12,32,14,9,18,18,22,14,14,17,18,24,24,18,10,18,46]});
       createSheet(wb, 'PorCliente', ['Cliente','Carteras','Pendientes','Saldo pendiente (COP)','Valor creado (COP)','Recuperado (COP)','% recuperado'], rowsToArray(result.cliente, [['cliente'],['carteras'],['pendientes'],['saldo_pendiente'],['creado'],['recuperado'],['porcentaje_recuperado']]), {integerCols:[1,2],moneyCols:[3,4,5],percentCols:[6],widths:[35,12,13,22,21,20,16]});
       createSheet(wb, 'PorEstado', ['Estado','Carteras','Valor creado (COP)','Recuperado (COP)','Saldo (COP)','% recuperado'], rowsToArray(result.estado, [['estado'],['carteras'],['creado'],['recuperado'],['saldo'],['porcentaje_recuperado']]), {integerCols:[1],moneyCols:[2,3,4],percentCols:[5],widths:[18,12,21,20,20,16]});
       createSheet(wb, 'PorAnio', ['Ano','Carteras','Valor creado (COP)','Recuperado (COP)','Saldo (COP)','% recuperado'], rowsToArray(result.anio, [['anio'],['carteras'],['creado'],['recuperado'],['saldo'],['porcentaje_recuperado']]), {integerCols:[1],moneyCols:[2,3,4],percentCols:[5]});
@@ -283,7 +617,7 @@
       try {
         await registerFiles(); stage('load',['engine']); status('Normalizando campos de cartera');
         await createNormalizedTable(); stage('normalize',['engine','load']);
-        const count = await queryRows('SELECT count(*) AS total FROM cartera_informe'); state.rows = Number(value(count[0], 'total'));
+        const count = await queryRows('SELECT (SELECT count(*) FROM cartera_informe) AS total, (SELECT count(*) FROM cartera_raw) - (SELECT count(*) FROM cartera_informe) AS duplicados'); state.rows = Number(value(count[0], 'total')); state.duplicates = Number(value(count[0], 'duplicados'));
         if (!state.rows) throw new Error('No se encontraron registros de cartera en los archivos seleccionados.');
         if (state.rows > 1048575) throw new Error('El libro XLSX admite hasta 1.048.575 registros en la hoja Datos. Divide la exportación en varios archivos.');
         status('Calculando indicadores con SQL', `${integer.format(state.rows)} registros`); await yieldFrame();
@@ -295,9 +629,9 @@
       finally { state.loading = false; updateButton(); }
     }
     function renderResults(summary) {
-      const created=value(summary,'creado')||0, recovered=value(summary,'recuperado')||0, outstanding=value(summary,'saldo')||0;
-      el.report_copy.textContent = `${integer.format(state.rows)} registros consolidados desde ${state.files.length} archivo${state.files.length === 1 ? '' : 's'}.`;
-      el.metrics.innerHTML = [ ['Cartera creada',money.format(created)], ['Recuperado',money.format(recovered)], ['Saldo en riesgo',money.format(outstanding)], ['Recuperacion global',`${((created ? recovered / created : 0) * 100).toFixed(1)}%`], ['Clientes distintos',integer.format(Number(value(summary,'clientes')||0))], ['Carteras pendientes',integer.format(Number(value(summary,'pendientes')||0))] ].map(([label, val]) => `<div class="metric"><span class="metric-label">${label}</span><span class="metric-value">${val}</span></div>`).join('');
+      const created=value(summary,'creado')||0, recovered=value(summary,'recuperado')||0, outstanding=value(summary,'vigente_saldo')||0;
+      el.report_copy.textContent = `${integer.format(state.rows)} registros consolidados desde ${state.files.length} archivo${state.files.length === 1 ? '' : 's'}.${state.duplicates ? ` Se descartaron ${integer.format(state.duplicates)} duplicado${state.duplicates === 1 ? '' : 's'}.` : ''}`;
+      el.metrics.innerHTML = [ ['Cartera creada',money.format(created),'creado'], ['Recuperado',money.format(recovered),'recuperado'], ['Saldo en riesgo',money.format(outstanding),'saldo'], ['Recuperacion global',`${((created ? recovered / created : 0) * 100).toFixed(1)}%`,'pct'], ['Clientes distintos',integer.format(Number(value(summary,'clientes')||0)),'clientes'], ['Carteras pendientes',integer.format(Number(value(summary,'pendientes')||0)),'pendientes'] ].map(([label, val, origin]) => `<div class="metric"><div class="metric-top"><span class="metric-label">${label}</span><button class="why" type="button" data-lineage="pantalla/${origin}" aria-label="¿De dónde sale ${label}?" title="¿De dónde sale este dato?">?</button></div><span class="metric-value">${val}</span></div>`).join('');
     }
 
     el.file_input.addEventListener('change', event => addFiles(event.target.files));

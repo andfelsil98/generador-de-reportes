@@ -14,7 +14,9 @@ Aplicación estática para GitHub Pages. Lee archivos JSON localmente, procesa l
 
 ## Datos esperados
 
-Cada archivo debe ser un arreglo JSON de objetos de cartera. Los campos que usa el informe son `consecutive`, `licensePlate`, `companyName`, `creationDate`, `amountInitial`, `amountReceived`, `reason`, `state.description`, `whoCreates.name`, `whoReports.name`, `ownerDocument` y `modifications`.
+Cada archivo debe ser un arreglo JSON de objetos de cartera. Los campos que usa el informe son `id`, `consecutive`, `licensePlate`, `companyName`, `creationDate`, `amountInitial`, `amountReceived`, `reason`, `state.description`, `whoCreates.name`, `whoReports.name`, `ownerDocument`, `installments` y `pendingInstallments`.
+
+Si una cartera (mismo `id`) aparece varias veces, se conserva una sola: la del archivo modificado más recientemente. Los registros sin `id` se conservan todos. La cantidad de duplicados descartados aparece al generar el informe y en la hoja Resumen.
 
 `creationDate` se interpreta tomando la fecha ISO inicial (`AAAA-MM-DD`) para no alterar el día por la zona horaria de origen.
 
