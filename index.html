@@ -54,6 +54,11 @@
     .primary:hover:not(:disabled) { background:var(--accent-dark); }
     .primary:active:not(:disabled) { transform:translateY(1px); }
     .primary:disabled { opacity:.48; cursor:not-allowed; }
+    .secondary { border:1px solid var(--line); border-radius:9px; padding:11px 16px; background:var(--surface); color:var(--ink); font-weight:700; white-space:nowrap; transition:border-color .18s ease; }
+    .secondary:hover:not(:disabled) { border-color:var(--accent); }
+    .secondary:disabled { opacity:.48; cursor:not-allowed; }
+    .action-buttons { display:flex; gap:10px; }
+    kbd { padding:1px 6px; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; background:var(--surface); font:inherit; font-size:.9em; font-weight:700; }
     .status { display:none; margin-top:24px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); padding:22px 26px; }
     .status.visible { display:block; }
     .status-top { display:flex; justify-content:space-between; gap:20px; align-items:baseline; }
@@ -159,7 +164,7 @@
     .lineage button:focus-visible, .why:focus-visible, .top-link:focus-visible, .text-link:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
     @keyframes pulse { 50% { opacity:.3; transform:scale(1.45); } }
     @media (prefers-reduced-motion: reduce) { * { animation:none!important; transition:none!important; } }
-    @media (max-width:780px) { .shell { width:min(100% - 28px,1180px); } main { padding-top:34px; } .hero,.results { grid-template-columns:1fr; gap:22px; } .workspace-head,.actions { align-items:flex-start; flex-direction:column; } .primary { width:100%; } .stage-list { grid-template-columns:1fr; } .drop-zone,.files { margin-left:16px; margin-right:16px; } .metrics { grid-template-columns:1fr; } .top-link { padding:7px 0; } .flow { grid-template-columns:1fr; gap:14px; } .flow li:not(:last-child)::after { content:"↓"; top:auto; bottom:-17px; right:auto; left:24px; transform:none; } .lineage-tools { padding:16px; } .lineage-grid { grid-template-columns:minmax(0,1fr); min-height:0; } .lineage-nav { min-width:0; border-right:0; border-bottom:1px solid var(--line); border-radius:0; } .nav-inner { position:static; display:flex; gap:6px; overflow-x:auto; padding:10px 16px; scrollbar-width:thin; } .nav-group { display:contents; } .nav-label { display:none; } .nav-item { width:auto; flex:0 0 auto; white-space:nowrap; background:var(--surface); border:1px solid var(--line); } .lineage-view { padding:20px 16px 24px; } .entry { grid-template-columns:1fr; padding:14px 4px; } }
+    @media (max-width:780px) { .shell { width:min(100% - 28px,1180px); } main { padding-top:34px; } .hero,.results { grid-template-columns:1fr; gap:22px; } .workspace-head,.actions { align-items:flex-start; flex-direction:column; } .primary,.secondary { width:100%; } .action-buttons { width:100%; flex-direction:column; } .stage-list { grid-template-columns:1fr; } .drop-zone,.files { margin-left:16px; margin-right:16px; } .metrics { grid-template-columns:1fr; } .top-link { padding:7px 0; } .flow { grid-template-columns:1fr; gap:14px; } .flow li:not(:last-child)::after { content:"↓"; top:auto; bottom:-17px; right:auto; left:24px; transform:none; } .lineage-tools { padding:16px; } .lineage-grid { grid-template-columns:minmax(0,1fr); min-height:0; } .lineage-nav { min-width:0; border-right:0; border-bottom:1px solid var(--line); border-radius:0; } .nav-inner { position:static; display:flex; gap:6px; overflow-x:auto; padding:10px 16px; scrollbar-width:thin; } .nav-group { display:contents; } .nav-label { display:none; } .nav-item { width:auto; flex:0 0 auto; white-space:nowrap; background:var(--surface); border:1px solid var(--line); } .lineage-view { padding:20px 16px 24px; } .entry { grid-template-columns:1fr; padding:14px 4px; } }
     @media (max-width:520px) { .brand small { display:none; } }
   </style>
 </head>
@@ -167,14 +172,14 @@
   <header><div class="shell"><div class="brand"><span class="brand-mark" aria-hidden="true">T</span> Teclogi <small>Informes de cartera</small></div><a class="top-link" href="#origen-datos">¿De dónde salen los datos?</a></div></header>
   <main class="shell">
     <section class="hero" aria-labelledby="page-title">
-      <div><p class="eyebrow">Procesamiento local</p><h1 id="page-title">Informe de carteras listo para Excel.</h1><p class="intro">Carga uno o varios archivos JSON. DuckDB-WASM analiza los registros en tu navegador y genera el libro con el mismo esquema del informe de referencia.</p></div>
+      <div><p class="eyebrow">Procesamiento local</p><h1 id="page-title">Informe de carteras listo para Excel.</h1><p class="intro">Pega la respuesta JSON del listado de cartera (o carga uno o varios archivos). DuckDB-WASM analiza los registros en tu navegador y genera el libro con el mismo esquema del informe de referencia.</p></div>
       <aside class="privacy"><strong>Los datos no se suben</strong>Los archivos permanecen en este equipo. Solo se descargan componentes públicos de la aplicación al abrir la página.</aside>
     </section>
     <section class="workspace" aria-labelledby="upload-title">
-      <div class="workspace-head"><h2 id="upload-title">Archivos de cartera</h2><div class="engine" id="engine-status"><span class="signal"></span><span id="engine-text">Preparando DuckDB-WASM</span></div></div>
-      <label class="drop-zone" id="drop-zone"><input id="file-input" type="file" accept=".json,application/json" multiple /><div><div class="drop-title">Arrastra los JSON de cartera aquí</div><p class="drop-copy">o <span class="select-link">selecciona archivos</span> desde tu equipo</p></div></label>
-      <div class="files"><strong>Archivos seleccionados</strong><div id="file-list" class="file-list"><p class="empty">Aún no has seleccionado archivos.</p></div></div>
-      <div class="actions"><p class="hint">Formato esperado: un arreglo JSON de objetos de cartera. Se admiten varios archivos y se unifican sin enviar información a ningún servidor.</p><button class="primary" id="generate" type="button" disabled>Generar informe</button></div>
+      <div class="workspace-head"><h2 id="upload-title">Datos de cartera</h2><div class="engine" id="engine-status"><span class="signal"></span><span id="engine-text">Preparando DuckDB-WASM</span></div></div>
+      <label class="drop-zone" id="drop-zone"><input id="file-input" type="file" accept=".json,application/json" multiple /><div><div class="drop-title">Pega el JSON con <kbd>Ctrl</kbd>+<kbd>V</kbd> en cualquier parte de la página</div><p class="drop-copy">También puedes arrastrar archivos aquí o <span class="select-link">seleccionarlos</span> desde tu equipo. El informe se genera solo.</p></div></label>
+      <div class="files"><strong>Datos cargados</strong><div id="file-list" class="file-list"><p class="empty">Aún no has pegado ni seleccionado datos.</p></div></div>
+      <div class="actions"><p class="hint">Formato esperado: un arreglo JSON de objetos de cartera, tal como lo devuelve el listado de cartera de TecLogi. Si cargas varios, se unifican sin enviar información a ningún servidor.</p><div class="action-buttons"><button class="secondary" id="paste" type="button">Pegar JSON</button><button class="primary" id="generate" type="button" disabled>Volver a generar</button></div></div>
     </section>
     <section class="status" id="status" aria-live="polite"><div class="status-top"><h2 id="status-title">Preparando procesamiento</h2><span id="status-count" class="status-count"></span></div><ol class="stage-list" id="stage-list"><li data-stage="engine">Motor analítico</li><li data-stage="load">Archivos cargados</li><li data-stage="normalize">Datos normalizados</li><li data-stage="aggregate">Indicadores calculados</li><li data-stage="workbook">Libro generado</li></ol><p class="error" id="error"></p></section>
     <section class="report" id="report" aria-labelledby="report-title"><div class="results"><div class="result-panel"><h2 id="report-title">Resumen del informe</h2><p id="report-copy">La base se procesó correctamente.</p><div class="metrics" id="metrics"></div><p class="panel-hint">Pulsa <strong>?</strong> junto a cada indicador para ver de dónde sale.</p></div><div class="result-panel"><h2>Libro de salida</h2><p>Se incluyen las nueve vistas del informe.</p><ul class="report-list"><li>Resumen ejecutivo</li><li>Base de datos normalizada</li><li>Análisis por cliente, estado y año</li><li>Antigüedad, causas, deudores y gestores</li></ul><button class="primary" id="download" type="button">Descargar XLSX</button><br /><a class="text-link" href="#origen-datos" data-lineage="resumen">¿De dónde sale cada columna del Excel?</a></div></div></section>
@@ -428,8 +433,8 @@
     import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.0/+esm';
     import * as XLSX from 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm';
 
-    const state = { files: [], db: null, conn: null, workbook: null, rows: 0, duplicates: 0, deleted: 0, other: 0, loading: false };
-    const el = Object.fromEntries(['file-input','file-list','drop-zone','generate','engine-status','engine-text','status','status-title','status-count','stage-list','error','report','report-copy','metrics','download'].map(id => [id.replaceAll('-', '_'), document.getElementById(id)]));
+    const state = { files: [], db: null, conn: null, workbook: null, rows: 0, duplicates: 0, deleted: 0, other: 0, loading: false, pending: false };
+    const el = Object.fromEntries(['file-input','file-list','drop-zone','generate','paste','engine-status','engine-text','status','status-title','status-count','stage-list','error','report','report-copy','metrics','download'].map(id => [id.replaceAll('-', '_'), document.getElementById(id)]));
     const money = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
     const integer = new Intl.NumberFormat('es-CO');
 
@@ -456,6 +461,7 @@
         state.conn = await db.connect();
         setEngine('ready', 'DuckDB-WASM listo');
         updateButton();
+        if (state.pending) requestGenerate();
       } catch (error) {
         console.error(error);
         setEngine('failed', 'No se pudo iniciar DuckDB-WASM');
@@ -464,7 +470,7 @@
     }
 
     function renderFiles() {
-      if (!state.files.length) { el.file_list.innerHTML = '<p class="empty">Aún no has seleccionado archivos.</p>'; return; }
+      if (!state.files.length) { el.file_list.innerHTML = '<p class="empty">Aún no has pegado ni seleccionado datos.</p>'; return; }
       el.file_list.innerHTML = state.files.map((file, index) => `<div class="file-item"><span class="file-name">${escapeHtml(file.name)}</span><span class="file-size">${fileSize(file.size)}</span><button class="remove" type="button" data-index="${index}" aria-label="Quitar ${escapeHtml(file.name)}">Quitar</button></div>`).join('');
     }
     function escapeHtml(value) { const div = document.createElement('div'); div.textContent = value; return div.innerHTML; }
@@ -472,8 +478,28 @@
     function addFiles(files) {
       const jsonFiles = [...files].filter(file => file.name.toLowerCase().endsWith('.json') || file.type === 'application/json');
       const existing = new Set(state.files.map(file => `${file.name}:${file.size}:${file.lastModified}`));
-      state.files.push(...jsonFiles.filter(file => !existing.has(`${file.name}:${file.size}:${file.lastModified}`)));
+      const added = jsonFiles.filter(file => !existing.has(`${file.name}:${file.size}:${file.lastModified}`));
+      state.files.push(...added);
       renderFiles(); updateButton();
+      if (added.length) requestGenerate();
+    }
+    // Texto pegado: se convierte en un archivo en memoria para reutilizar el mismo flujo de carga.
+    function addPastedText(text) {
+      const trimmed = String(text || '').trim();
+      if (!trimmed) return;
+      try { JSON.parse(trimmed); } catch { clearError(); status('No se pudo leer lo pegado'); showError('El texto pegado no es un JSON válido. Copia la respuesta completa del listado de cartera e inténtalo de nuevo.'); return; }
+      if (state.files.some(file => file.pastedText === trimmed)) { requestGenerate(); return; }
+      const now = new Date();
+      const file = new File([trimmed], `pegado_${now.toLocaleTimeString('es-CO', { hour12: false }).replaceAll(':', '-')}.json`, { type: 'application/json', lastModified: now.getTime() });
+      file.pastedText = trimmed;
+      addFiles([file]);
+    }
+    // Genera en cuanto haya datos y motor; si algo está en curso, lo deja pendiente.
+    function requestGenerate() {
+      if (!state.files.length) { state.pending = false; return; }
+      if (!state.db || state.loading) { state.pending = true; if (!state.db) status('Esperando el motor analítico', 'el informe se generará automáticamente'); return; }
+      state.pending = false;
+      generate();
     }
 
     async function queryRows(query) {
@@ -628,9 +654,9 @@
         const result = {}; for (const [key, query] of Object.entries(aggregateQueries)) result[key] = await queryRows(query);
         stage('aggregate',['engine','load','normalize']); status('Construyendo el libro Excel', `${integer.format(state.rows)} registros`); await yieldFrame();
         state.workbook = buildWorkbook(result); stage('workbook',['engine','load','normalize','aggregate']); status('Informe listo', `${integer.format(state.rows)} registros procesados`);
-        renderResults(result.resumen[0]); el.report.classList.add('visible');
+        renderResults(result.resumen[0]); el.report.classList.add('visible'); el.report.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } catch (error) { console.error(error); showError(error.message || 'No se pudo generar el informe.'); status('El proceso no pudo terminar'); }
-      finally { state.loading = false; updateButton(); }
+      finally { state.loading = false; updateButton(); if (state.pending) requestGenerate(); }
     }
     function renderResults(summary) {
       const created=value(summary,'creado')||0, recovered=value(summary,'recuperado')||0, outstanding=value(summary,'vigente_saldo')||0;
@@ -642,7 +668,23 @@
     el.drop_zone.addEventListener('dragover', event => { event.preventDefault(); el.drop_zone.classList.add('dragging'); });
     el.drop_zone.addEventListener('dragleave', () => el.drop_zone.classList.remove('dragging'));
     el.drop_zone.addEventListener('drop', event => { event.preventDefault(); el.drop_zone.classList.remove('dragging'); addFiles(event.dataTransfer.files); });
-    el.file_list.addEventListener('click', event => { const button = event.target.closest('[data-index]'); if (!button) return; state.files.splice(Number(button.dataset.index),1); renderFiles(); updateButton(); });
+    el.file_list.addEventListener('click', event => {
+      const button = event.target.closest('[data-index]'); if (!button) return;
+      state.files.splice(Number(button.dataset.index),1); renderFiles(); updateButton();
+      if (state.files.length) requestGenerate(); else { state.workbook = null; el.report.classList.remove('visible'); el.status.classList.remove('visible'); clearError(); }
+    });
+    document.addEventListener('paste', event => {
+      const target = event.target;
+      if (target instanceof HTMLElement && (target.isContentEditable || (target.matches('input, textarea') && target.type !== 'file'))) return;
+      const files = [...(event.clipboardData?.files || [])];
+      if (files.length) { event.preventDefault(); addFiles(files); return; }
+      const text = event.clipboardData?.getData('text');
+      if (text && text.trim()) { event.preventDefault(); addPastedText(text); }
+    });
+    el.paste.addEventListener('click', async () => {
+      try { addPastedText(await navigator.clipboard.readText()); }
+      catch { status('No se pudo leer el portapapeles'); showError('El navegador no permitió leer el portapapeles. Usa Ctrl+V (Cmd+V en Mac) sobre la página.'); }
+    });
     el.generate.addEventListener('click', generate);
     el.download.addEventListener('click', () => { if (state.workbook) XLSX.writeFile(state.workbook, `Informe_Carteras_Teclogi_${new Date().toISOString().slice(0,10)}.xlsx`, { compression: true }); });
     initDuckDB();
