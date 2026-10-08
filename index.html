@@ -205,22 +205,22 @@
     (() => {
       const KINDS = { json: 'Del JSON', calc: 'Calculado', app: 'Del informe' };
       const groupColumns = {
-        carteras: { name: 'Carteras', kind: 'calc', how: 'Cantidad de carteras del grupo, en cualquier estado.', formula: 'CONTAR(carteras del grupo)' },
+        carteras: { name: 'Carteras', kind: 'calc', how: 'Cantidad de carteras del grupo, pendientes y pagadas.', formula: 'CONTAR(carteras del grupo)' },
         pendientes: { name: 'Pendientes', kind: 'calc', src: ['datos/estado'], how: 'Cantidad de carteras del grupo con estado Pendiente.', formula: 'CONTAR(Estado = Pendiente)' },
-        'saldo-pendiente': { name: 'Saldo pendiente (COP)', kind: 'calc', src: ['datos/saldo', 'datos/estado'], how: 'Suma del saldo por recuperar, solo de las carteras pendientes del grupo. Las pagadas y las anuladas no suman.', formula: 'SUMA(Saldo por recuperar) donde Estado = Pendiente' },
-        creado: { name: 'Valor creado (COP)', kind: 'calc', src: ['datos/valor-inicial'], how: 'Suma del valor inicial de todas las carteras del grupo, en cualquier estado.', formula: 'SUMA(Valor inicial)' },
-        recuperado: { name: 'Recuperado (COP)', kind: 'calc', src: ['datos/recuperado'], how: 'Suma de lo recuperado en todas las carteras del grupo, en cualquier estado.', formula: 'SUMA(Recuperado)' },
-        saldo: { name: 'Saldo (COP)', kind: 'calc', src: ['datos/saldo'], how: 'Suma del saldo por recuperar de todas las carteras del grupo, incluidas las pagadas y las anuladas.', formula: 'SUMA(Saldo por recuperar)' },
+        'saldo-pendiente': { name: 'Saldo pendiente (COP)', kind: 'calc', src: ['datos/saldo', 'datos/estado'], how: 'Suma del saldo por recuperar, solo de las carteras pendientes del grupo. Las pagadas no suman.', formula: 'SUMA(Saldo por recuperar) donde Estado = Pendiente' },
+        creado: { name: 'Valor creado (COP)', kind: 'calc', src: ['datos/valor-inicial'], how: 'Suma del valor inicial de las carteras del grupo, pendientes y pagadas.', formula: 'SUMA(Valor inicial)' },
+        recuperado: { name: 'Recuperado (COP)', kind: 'calc', src: ['datos/recuperado'], how: 'Suma de lo recuperado en las carteras del grupo, pendientes y pagadas.', formula: 'SUMA(Recuperado)' },
+        saldo: { name: 'Saldo (COP)', kind: 'calc', src: ['datos/saldo'], how: 'Suma del saldo por recuperar de las carteras del grupo, pendientes y pagadas.', formula: 'SUMA(Saldo por recuperar)' },
         pct: { name: '% recuperado', kind: 'calc', src: ['datos/recuperado', 'datos/valor-inicial'], how: 'Qué parte del valor creado del grupo ya se recuperó. Se calcula con los totales del grupo, no promediando el porcentaje de cada cartera.', formula: 'Recuperado ÷ Valor creado', fallback: 'Si el valor creado del grupo es 0, se muestra 0 %.' }
       };
       const columns = (...ids) => ids.map(id => ({ id, ...groupColumns[id] }));
       const ageRanges = '0-90 dias, 91-180 dias, 181-365 dias, 1-2 anos (366 a 730 días) y Mas de 2 anos (más de 730 días)';
 
       const views = [
-        { id: 'pantalla', group: 'En pantalla', short: 'Indicadores', title: 'Indicadores en pantalla', desc: 'Los datos que aparecen en esta página al terminar «Generar informe», antes de descargar el Excel.', facts: [['Alcance', 'todas las carteras de todos los archivos cargados, sin duplicados']], items: [
-          { id: 'registros', name: 'Registros consolidados', kind: 'calc', src: ['~Cada objeto de los archivos JSON', 'reglas/archivos'], how: 'Cantidad de carteras leídas, sumando todos los archivos seleccionados. Si la misma cartera (mismo `id`) aparece más de una vez, se cuenta una sola.', formula: 'CONTAR(carteras sin duplicados)', fallback: 'Si se descartó algún duplicado, al lado se indica cuántos.' },
-          { id: 'creado', name: 'Cartera creada', kind: 'calc', src: ['datos/valor-inicial'], how: 'Suma del valor inicial de todas las carteras, sin importar su estado (pendientes, pagadas y anuladas).', formula: 'SUMA(Valor inicial)' },
-          { id: 'recuperado', name: 'Recuperado', kind: 'calc', src: ['datos/recuperado'], how: 'Suma de lo recuperado en todas las carteras, sin importar su estado.', formula: 'SUMA(Recuperado)' },
+        { id: 'pantalla', group: 'En pantalla', short: 'Indicadores', title: 'Indicadores en pantalla', desc: 'Los datos que aparecen en esta página al terminar «Generar informe», antes de descargar el Excel.', facts: [['Alcance', 'carteras pending y paid de todos los archivos cargados, sin duplicados; las eliminadas y cualquier otro estado se excluyen']], items: [
+          { id: 'registros', name: 'Registros consolidados', kind: 'calc', src: ['~Cada objeto de los archivos JSON', 'reglas/archivos'], how: 'Cantidad de carteras leídas, sumando todos los archivos seleccionados. Si la misma cartera (mismo `id`) aparece más de una vez, se cuenta una sola. Solo se cuentan las pendientes y pagadas.', formula: 'CONTAR(carteras pending o paid, sin duplicados)', fallback: 'Si se descartó algún duplicado o se excluyó alguna cartera, al lado se indica cuántas.' },
+          { id: 'creado', name: 'Cartera creada', kind: 'calc', src: ['datos/valor-inicial'], how: 'Suma del valor inicial de las carteras pendientes y pagadas. Las eliminadas no suman.', formula: 'SUMA(Valor inicial)' },
+          { id: 'recuperado', name: 'Recuperado', kind: 'calc', src: ['datos/recuperado'], how: 'Suma de lo recuperado en las carteras pendientes y pagadas. Lo abonado a carteras eliminadas no suma.', formula: 'SUMA(Recuperado)' },
           { id: 'saldo', name: 'Saldo en riesgo', kind: 'calc', src: ['datos/saldo', 'datos/estado'], how: 'Suma del saldo por recuperar, solo de las carteras pendientes: lo que sigue abierto por cobrar. Es el mismo valor que «SALDO EN RIESGO (vigentes)» de la hoja Resumen.', formula: 'SUMA(Saldo por recuperar) donde Estado = Pendiente' },
           { id: 'pct', name: 'Recuperación global', kind: 'calc', src: ['pantalla/recuperado', 'pantalla/creado'], how: 'Porcentaje de la cartera creada que ya se recuperó. Se muestra con un decimal.', formula: 'Recuperado ÷ Cartera creada × 100', fallback: 'Si la cartera creada es 0, se muestra 0 %.' },
           { id: 'clientes', name: 'Clientes distintos', kind: 'calc', src: ['datos/cliente'], how: 'Cantidad de nombres de cliente diferentes. Los nombres se comparan exactamente: una diferencia de tildes, espacios o mayúsculas cuenta como otro cliente.', formula: 'CONTAR DISTINTOS(Cliente)', fallback: 'Las carteras sin cliente cuentan como un cliente más, llamado «Sin cliente».' },
@@ -228,11 +228,11 @@
         ] },
         { id: 'resumen', group: 'Libro Excel', short: 'Resumen', title: 'Hoja Resumen', desc: 'Primera hoja del Excel: los totales generales de la cartera, en el mismo orden en que aparecen.', facts: [['Cada fila', 'un indicador'], ['Vigentes', 'solo cuentan las carteras pendientes']], items: [
           { id: 'fecha-corte', name: 'Fecha de corte del informe', kind: 'app', src: ['~Reloj de tu equipo'], how: 'Fecha en que se generó el informe, tomada del reloj de tu equipo. No viene del JSON.' },
-          { id: 'registros', name: 'Registros en la base', kind: 'calc', src: ['~Cada objeto de los archivos JSON', 'reglas/archivos'], how: 'Cantidad de carteras leídas, sumando todos los archivos seleccionados. Si la misma cartera (mismo `id`) aparece más de una vez, se cuenta una sola. Coincide con el número de filas de la hoja Datos.', formula: 'CONTAR(carteras sin duplicados)' },
+          { id: 'registros', name: 'Registros en la base', kind: 'calc', src: ['~Cada objeto de los archivos JSON', 'reglas/archivos'], how: 'Cantidad de carteras leídas, sumando todos los archivos seleccionados. Si la misma cartera (mismo `id`) aparece más de una vez, se cuenta una sola. Solo se cuentan las pendientes y pagadas. Coincide con el número de filas de la hoja Datos.', formula: 'CONTAR(carteras pending o paid, sin duplicados)' },
           { id: 'duplicados', name: 'Duplicados descartados', kind: 'calc', src: ['campos/id', 'reglas/archivos'], how: 'Cuántos registros repetidos (mismo `id`) se quitaron antes de calcular el informe. Es 0 si no hubo repetidos.', formula: 'Registros leídos − Registros en la base' },
-          { id: 'creado', name: 'Cartera total creada', kind: 'calc', src: ['datos/valor-inicial'], how: 'Suma del valor inicial de todas las carteras, en cualquier estado.', formula: 'SUMA(Valor inicial)' },
-          { id: 'recuperado', name: 'Total recuperado', kind: 'calc', src: ['datos/recuperado'], how: 'Suma de lo recuperado en todas las carteras, en cualquier estado.', formula: 'SUMA(Recuperado)' },
-          { id: 'saldo', name: 'Saldo pendiente por recuperar', kind: 'calc', src: ['datos/saldo'], how: 'Suma del saldo por recuperar de todas las carteras, incluidas las pagadas y las anuladas.', formula: 'SUMA(Saldo por recuperar)', note: 'Para ver solo lo que sigue abierto, usa «SALDO EN RIESGO (vigentes)».' },
+          { id: 'creado', name: 'Cartera total creada', kind: 'calc', src: ['datos/valor-inicial'], how: 'Suma del valor inicial de las carteras pendientes y pagadas.', formula: 'SUMA(Valor inicial)' },
+          { id: 'recuperado', name: 'Total recuperado', kind: 'calc', src: ['datos/recuperado'], how: 'Suma de lo recuperado en las carteras pendientes y pagadas.', formula: 'SUMA(Recuperado)' },
+          { id: 'saldo', name: 'Saldo pendiente por recuperar', kind: 'calc', src: ['datos/saldo'], how: 'Suma del saldo por recuperar de las carteras pendientes y pagadas.', formula: 'SUMA(Saldo por recuperar)', note: 'Para ver solo lo que sigue abierto, usa «SALDO EN RIESGO (vigentes)».' },
           { id: 'pct', name: '% de recuperacion global', kind: 'calc', src: ['resumen/recuperado', 'resumen/creado'], how: 'Qué parte de la cartera creada ya se recuperó.', formula: 'Total recuperado ÷ Cartera total creada', fallback: 'Si la cartera creada es 0, se muestra 0 %.' },
           { id: 'vigentes', name: 'Carteras VIGENTES (pendientes)', kind: 'calc', src: ['datos/estado'], how: 'Cantidad de carteras con estado Pendiente.', formula: 'CONTAR(Estado = Pendiente)' },
           { id: 'vig-creado', name: 'Valor creado (vigentes)', kind: 'calc', src: ['datos/valor-inicial', 'datos/estado'], how: 'Suma del valor inicial, solo de las carteras pendientes.', formula: 'SUMA(Valor inicial) donde Estado = Pendiente' },
@@ -240,14 +240,14 @@
           { id: 'vig-saldo', name: 'SALDO EN RIESGO (vigentes)', kind: 'calc', src: ['datos/saldo', 'datos/estado'], how: 'Suma del saldo por recuperar, solo de las carteras pendientes. Es lo que sigue abierto por cobrar y coincide con «Saldo en riesgo» de la pantalla.', formula: 'SUMA(Saldo por recuperar) donde Estado = Pendiente' },
           { id: 'vig-pct', name: '% recuperacion (vigentes)', kind: 'calc', src: ['resumen/vig-recuperado', 'resumen/vig-creado'], how: 'Qué parte del valor creado de las carteras pendientes ya se recuperó.', formula: 'Valor recuperado (vigentes) ÷ Valor creado (vigentes)', fallback: 'Si el valor creado de las vigentes es 0, se muestra 0 %.' },
           { id: 'pagadas', name: 'Carteras PAGADAS', kind: 'calc', src: ['datos/estado'], how: 'Cantidad de carteras con estado Pagada.', formula: 'CONTAR(Estado = Pagada)' },
-          { id: 'anuladas', name: 'Carteras ANULADAS', kind: 'calc', src: ['datos/estado'], how: 'Cantidad de carteras con estado Anulada.', formula: 'CONTAR(Estado = Anulada)' },
-          { id: 'anulado', name: 'Valor anulado (no recuperable)', kind: 'calc', src: ['datos/saldo', 'datos/estado'], how: 'Lo que quedó sin recuperar en las carteras anuladas: su valor inicial menos lo que se alcanzó a recuperar.', formula: 'SUMA(Saldo por recuperar) donde Estado = Anulada' },
-          { id: 'ticket', name: 'Ticket promedio por cartera', kind: 'calc', src: ['datos/valor-inicial'], how: 'Valor inicial promedio de todas las carteras, incluidas las pagadas y las anuladas.', formula: 'PROMEDIO(Valor inicial)' },
-          { id: 'maxima', name: 'Cartera mas alta registrada', kind: 'calc', src: ['datos/valor-inicial'], how: 'El valor inicial más alto entre todas las carteras.', formula: 'MÁXIMO(Valor inicial)' },
+          { id: 'eliminadas', name: 'Carteras eliminadas (excluidas del informe)', kind: 'calc', src: ['state', 'reglas/estados'], how: 'Cantidad de carteras con `state.description` = `deleted` que se dejaron por fuera. Es solo informativo: no entran en ningún otro dato del informe.', formula: 'CONTAR(state.description = deleted)' },
+          { id: 'otros', name: 'Carteras con otro estado (excluidas)', kind: 'calc', src: ['state', 'reglas/estados'], how: 'Cantidad de carteras cuyo `state.description` no es exactamente `pending`, `paid` ni `deleted` (por ejemplo vacío). Se dejan por fuera igual que en TecLogi. Normalmente es 0.', formula: 'CONTAR(state.description fuera de pending, paid, deleted)' },
+          { id: 'ticket', name: 'Ticket promedio por cartera', kind: 'calc', src: ['datos/valor-inicial'], how: 'Valor inicial promedio de las carteras pendientes y pagadas.', formula: 'PROMEDIO(Valor inicial)' },
+          { id: 'maxima', name: 'Cartera mas alta registrada', kind: 'calc', src: ['datos/valor-inicial'], how: 'El valor inicial más alto entre las carteras pendientes y pagadas.', formula: 'MÁXIMO(Valor inicial)' },
           { id: 'clientes', name: 'Clientes distintos', kind: 'calc', src: ['datos/cliente'], how: 'Cantidad de nombres de cliente diferentes. Los nombres se comparan exactamente: una diferencia de tildes, espacios o mayúsculas cuenta como otro cliente.', formula: 'CONTAR DISTINTOS(Cliente)', fallback: 'Las carteras sin cliente cuentan como un cliente más, llamado «Sin cliente».' },
           { id: 'notas', name: 'Notas metodologicas', kind: 'app', how: 'Texto fijo que resume las reglas del informe. Es igual en todos los informes y no cambia con los datos.' }
         ] },
-        { id: 'datos', group: 'Libro Excel', short: 'Datos', title: 'Hoja Datos', desc: 'La base completa, ya limpia: una fila por cada cartera leída, sin duplicados. Todas las demás hojas se calculan a partir de estas columnas.', facts: [['Cada fila', 'una cartera del JSON'], ['Orden', 'fecha de creación más reciente primero; las que no tienen fecha, al final']], items: [
+        { id: 'datos', group: 'Libro Excel', short: 'Datos', title: 'Hoja Datos', desc: 'La base ya limpia: una fila por cada cartera pendiente o pagada, sin duplicados ni eliminadas. Todas las demás hojas se calculan a partir de estas columnas.', facts: [['Cada fila', 'una cartera del JSON'], ['Orden', 'fecha de creación más reciente primero; las que no tienen fecha, al final']], items: [
           { id: 'consecutivo', name: 'Consecutivo', kind: 'json', src: ['consecutive'], how: 'Número consecutivo de la cartera, tal como viene.', fallback: 'Si viene vacío, la celda queda vacía.' },
           { id: 'placa', name: 'Placa', kind: 'json', src: ['licensePlate'], how: 'Placa del vehículo, tal como viene.', fallback: 'Si viene vacía, la celda queda vacía.' },
           { id: 'cliente', name: 'Cliente', kind: 'json', src: ['companyName'], how: 'Nombre del cliente (empresa), tal como viene.', fallback: 'Si viene vacío, se escribe «Sin cliente».' },
@@ -257,7 +257,7 @@
           { id: 'recuperado', name: 'Recuperado (COP)', kind: 'json', src: ['amountReceived'], how: 'Valor que ya se recuperó de la cartera, tal como viene.', fallback: 'Si viene vacío, se toma 0.' },
           { id: 'saldo', name: 'Saldo por recuperar (COP)', kind: 'calc', src: ['datos/valor-inicial', 'datos/recuperado'], how: 'Lo que falta por recuperar de la cartera. Puede ser negativo si se recuperó más que el valor inicial.', formula: 'Valor inicial − Recuperado' },
           { id: 'pct', name: '% Recuperado', kind: 'calc', src: ['datos/recuperado', 'datos/valor-inicial'], how: 'Qué parte del valor inicial de la cartera ya se recuperó.', formula: 'Recuperado ÷ Valor inicial', fallback: 'Si el valor inicial es 0, se muestra 0 %.' },
-          { id: 'estado', name: 'Estado', kind: 'json', src: ['state.description', 'reglas/estados'], how: 'Estado de la cartera traducido al español: `paid` se convierte en Pagada, `deleted` en Anulada y cualquier otro valor en Pendiente.', fallback: 'Si viene vacío, se toma como Pendiente.' },
+          { id: 'estado', name: 'Estado', kind: 'json', src: ['state.description', 'reglas/estados'], how: 'Estado de la cartera traducido al español: `paid` se convierte en Pagada y `pending` en Pendiente. Las `deleted` y cualquier otro estado no aparecen.', fallback: 'Si viene vacío, la cartera se excluye.' },
           { id: 'antiguedad-dias', name: 'Antiguedad (dias)', kind: 'calc', src: ['datos/fecha', '~Fecha de hoy'], how: 'Días transcurridos desde la fecha de creación hasta el día en que generas el informe. Cambia si generas el mismo archivo otro día.', formula: 'Hoy − Fecha creacion (en días)', fallback: 'Si no hay fecha, la celda queda vacía.' },
           { id: 'rango', name: 'Rango antiguedad', kind: 'calc', src: ['datos/antiguedad-dias'], how: `Agrupa los días de antigüedad en cinco rangos: ${ageRanges}.`, fallback: 'Si no hay fecha, se escribe «Sin fecha».' },
           { id: 'creado-por', name: 'Creado por', kind: 'json', src: ['whoCreates.name'], how: 'Nombre de la persona que creó la cartera. Es el «gestor» de la hoja PorGestor.', fallback: 'Si viene vacío, se escribe «Sin asignar».' },
@@ -271,8 +271,8 @@
           { id: 'cliente', name: 'Cliente', kind: 'json', src: ['datos/cliente'], how: 'Cada nombre de cliente distinto forma una fila. Los nombres se comparan exactamente: una diferencia de tildes, espacios o mayúsculas crea otra fila.', fallback: 'Las carteras sin cliente se agrupan en la fila «Sin cliente».' },
           ...columns('carteras', 'pendientes', 'saldo-pendiente', 'creado', 'recuperado', 'pct')
         ] },
-        { id: 'porestado', group: 'Libro Excel', short: 'PorEstado', title: 'Hoja PorEstado', desc: 'Totales agrupados por estado de la cartera.', facts: [['Cada fila', 'un estado'], ['Orden', 'Pendiente, Pagada, Anulada']], items: [
-          { id: 'estado', name: 'Estado', kind: 'json', src: ['datos/estado', 'reglas/estados'], how: 'Estado traducido de cada cartera: Pendiente, Pagada o Anulada. Solo aparecen los estados que existan en los archivos.' },
+        { id: 'porestado', group: 'Libro Excel', short: 'PorEstado', title: 'Hoja PorEstado', desc: 'Totales agrupados por estado de la cartera.', facts: [['Cada fila', 'un estado'], ['Orden', 'Pendiente, Pagada']], items: [
+          { id: 'estado', name: 'Estado', kind: 'json', src: ['datos/estado', 'reglas/estados'], how: 'Estado traducido de cada cartera: Pendiente o Pagada. Solo aparecen los estados que existan en los archivos.' },
           ...columns('carteras', 'creado', 'recuperado', 'saldo', 'pct')
         ] },
         { id: 'poranio', group: 'Libro Excel', short: 'PorAnio', title: 'Hoja PorAnio', desc: 'Totales agrupados por año de creación de la cartera.', facts: [['Cada fila', 'un año'], ['Orden', 'año más antiguo primero; «Sin fecha» al final']], items: [
@@ -291,7 +291,7 @@
           { id: 'deudor', name: 'Deudor', kind: 'json', src: ['datos/deudor'], how: 'Número de documento del propietario del vehículo. Cada documento distinto forma una fila.', fallback: 'Las carteras sin documento no aparecen en esta hoja.' },
           ...columns('carteras', 'pendientes', 'saldo-pendiente', 'creado', 'recuperado', 'pct')
         ] },
-        { id: 'porgestor', group: 'Libro Excel', short: 'PorGestor', title: 'Hoja PorGestor', desc: 'Totales agrupados por la persona que creó cada cartera.', facts: [['Cada fila', 'una persona'], ['Orden', 'mayor saldo primero (todos los estados)']], items: [
+        { id: 'porgestor', group: 'Libro Excel', short: 'PorGestor', title: 'Hoja PorGestor', desc: 'Totales agrupados por la persona que creó cada cartera.', facts: [['Cada fila', 'una persona'], ['Orden', 'mayor saldo primero (pendientes y pagadas)']], items: [
           { id: 'gestor', name: 'Gestor', kind: 'json', src: ['datos/creado-por'], how: 'Nombre de quien creó la cartera (no de quien la reportó). Cada nombre distinto forma una fila.', fallback: 'Las carteras sin creador se agrupan en la fila «Sin asignar».' },
           ...columns('carteras', 'creado', 'recuperado', 'saldo', 'pct')
         ] },
@@ -302,7 +302,7 @@
           { id: 'creationDate', name: 'creationDate', code: true, how: 'Fecha de creación. Solo se leen los primeros 10 caracteres (AAAA-MM-DD).', uses: ['datos/fecha', 'datos/anio', 'datos/antiguedad-dias', 'datos/rango', 'poranio/anio', 'antiguedad/rango'] },
           { id: 'amountInitial', name: 'amountInitial', code: true, how: 'Valor inicial de la cartera. Es la base de todos los «valor creado», del saldo y de los porcentajes.', uses: ['datos/valor-inicial', 'datos/saldo', 'datos/pct', 'pantalla/creado', 'resumen/creado', 'resumen/ticket', 'resumen/maxima'] },
           { id: 'amountReceived', name: 'amountReceived', code: true, how: 'Valor recuperado. Es la base de todos los «recuperado», del saldo y de los porcentajes.', uses: ['datos/recuperado', 'datos/saldo', 'datos/pct', 'pantalla/recuperado', 'resumen/recuperado'] },
-          { id: 'state', name: 'state.description', code: true, how: 'Estado de la cartera. Decide si cuenta como pendiente, pagada o anulada.', uses: ['datos/estado', 'reglas/estados', 'porestado/estado', 'pantalla/pendientes', 'resumen/vigentes', 'resumen/pagadas', 'resumen/anuladas'] },
+          { id: 'state', name: 'state.description', code: true, how: 'Estado de la cartera. Decide si cuenta como pendiente o pagada, o si se excluye (eliminada u otro estado).', uses: ['datos/estado', 'reglas/estados', 'porestado/estado', 'pantalla/pendientes', 'resumen/vigentes', 'resumen/pagadas', 'resumen/eliminadas', 'resumen/otros'] },
           { id: 'whoCreates', name: 'whoCreates.name', code: true, how: 'Nombre de quien creó la cartera.', uses: ['datos/creado-por', 'porgestor/gestor'] },
           { id: 'whoReports', name: 'whoReports.name', code: true, how: 'Nombre de quien reportó la cartera.', uses: ['datos/reportado-por'] },
           { id: 'ownerDocument', name: 'ownerDocument', code: true, how: 'Documento del propietario del vehículo. El informe lo usa como «deudor».', uses: ['datos/deudor', 'topdeudores/deudor'] },
@@ -314,7 +314,7 @@
         ] },
         { id: 'reglas', group: 'Referencia', short: 'Reglas generales', title: 'Reglas generales', desc: 'Criterios que se aplican a todo el informe.', items: [
           { id: 'archivos', name: 'Varios archivos y duplicados', how: 'Todos los archivos seleccionados se unen en una sola base, emparejando los campos por su nombre. Si la misma cartera (mismo `id`) aparece más de una vez, se conserva una sola: la del archivo modificado más recientemente en tu equipo; si empatan, la del último archivo de la lista.', fallback: 'Los registros sin `id` no se pueden comparar y se conservan todos. Cuántos duplicados se quitaron aparece al generar el informe y en la hoja Resumen.' },
-          { id: 'estados', name: 'Cómo se decide el estado', how: 'Se lee `state.description` sin distinguir mayúsculas y minúsculas:', list: ['`paid` → Pagada', '`deleted` → Anulada', 'Cualquier otro valor (por ejemplo `pending`) o vacío → Pendiente. En la hoja Resumen, «vigentes» significa pendientes.'] },
+          { id: 'estados', name: 'Cómo se decide el estado', how: 'Se lee `state.description` tal como viene:', list: ['`pending` → Pendiente. En la hoja Resumen, «vigentes» significa pendientes.', '`paid` → Pagada', '`deleted` → se excluye: no entra en ningún cálculo ni hoja, solo se informa cuántas hubo.', 'Cualquier otro valor o vacío → también se excluye, igual que en TecLogi.', 'La comparación es exacta (distingue mayúsculas), como en TecLogi.'] },
           { id: 'vacios', name: 'Datos que vienen vacíos', how: 'Cuando un campo no viene en el JSON o viene vacío, se usa este valor:', list: ['Cliente → «Sin cliente»', 'Creado por y Reportado por → «Sin asignar»', 'Motivo → «Sin motivo»', 'Valor inicial y Recuperado → 0', 'Cuotas y Cuotas pendientes → 0', 'Placa, Consecutivo y Deudor → celda vacía', 'Fecha → celda vacía; se agrupa como «Sin fecha»'] },
           { id: 'fechas', name: 'Fechas y zona horaria', how: 'De `creationDate` se toman solo los 10 primeros caracteres (AAAA-MM-DD). Así el día no cambia por la hora ni por la zona horaria de origen.' },
           { id: 'hoy', name: 'Antigüedad y fecha de hoy', how: 'La antigüedad se mide contra el día en que generas el informe. Si generas el mismo archivo otro día, los días y los rangos de antigüedad cambian.' },
@@ -428,7 +428,7 @@
     import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.0/+esm';
     import * as XLSX from 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm';
 
-    const state = { files: [], db: null, conn: null, workbook: null, rows: 0, duplicates: 0, loading: false };
+    const state = { files: [], db: null, conn: null, workbook: null, rows: 0, duplicates: 0, deleted: 0, other: 0, loading: false };
     const el = Object.fromEntries(['file-input','file-list','drop-zone','generate','engine-status','engine-text','status','status-title','status-count','stage-list','error','report','report-copy','metrics','download'].map(id => [id.replaceAll('-', '_'), document.getElementById(id)]));
     const money = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
     const integer = new Intl.NumberFormat('es-CO');
@@ -519,10 +519,12 @@
           try_cast(substr(CAST(creationDate AS VARCHAR), 1, 10) AS DATE) AS fecha_creacion,
           COALESCE(CAST(amountInitial AS DOUBLE), 0) AS valor_inicial,
           COALESCE(CAST(amountReceived AS DOUBLE), 0) AS recuperado,
-          CASE lower(COALESCE(CAST(state.description AS VARCHAR), ''))
+          -- Igual que TecLogi-Web: comparación exacta de state.description.
+          CASE COALESCE(CAST(state.description AS VARCHAR), '')
+            WHEN 'pending' THEN 'Pendiente'
             WHEN 'paid' THEN 'Pagada'
-            WHEN 'deleted' THEN 'Anulada'
-            ELSE 'Pendiente'
+            WHEN 'deleted' THEN 'Eliminada'
+            ELSE 'Otro'
           END AS estado,
           COALESCE(CAST(whoCreates.name AS VARCHAR), 'Sin asignar') AS creado_por,
           COALESCE(CAST(whoReports.name AS VARCHAR), 'Sin asignar') AS reportado_por,
@@ -548,11 +550,13 @@
             ELSE 'Mas de 2 anos'
           END AS rango_antiguedad
         FROM cartera
+        -- Solo pending y paid: las eliminadas (deleted) y cualquier otro estado no entran en ningún cálculo ni hoja.
+        WHERE estado IN ('Pendiente', 'Pagada')
       `);
     }
 
     const aggregateQueries = {
-      resumen: `SELECT count(*) AS registros, coalesce(sum(valor_inicial),0) AS creado, coalesce(sum(recuperado),0) AS recuperado, coalesce(sum(saldo_por_recuperar),0) AS saldo, coalesce(sum(CASE WHEN estado = 'Pendiente' THEN valor_inicial ELSE 0 END),0) AS vigente_creado, coalesce(sum(CASE WHEN estado = 'Pendiente' THEN recuperado ELSE 0 END),0) AS vigente_recuperado, coalesce(sum(CASE WHEN estado = 'Pendiente' THEN saldo_por_recuperar ELSE 0 END),0) AS vigente_saldo, count(*) FILTER (WHERE estado = 'Pendiente') AS pendientes, count(*) FILTER (WHERE estado = 'Pagada') AS pagadas, count(*) FILTER (WHERE estado = 'Anulada') AS anuladas, coalesce(sum(CASE WHEN estado = 'Anulada' THEN saldo_por_recuperar ELSE 0 END),0) AS anulado, coalesce(avg(valor_inicial),0) AS ticket, coalesce(max(valor_inicial),0) AS maxima, count(DISTINCT cliente) AS clientes FROM cartera_informe`,
+      resumen: `SELECT count(*) AS registros, coalesce(sum(valor_inicial),0) AS creado, coalesce(sum(recuperado),0) AS recuperado, coalesce(sum(saldo_por_recuperar),0) AS saldo, coalesce(sum(CASE WHEN estado = 'Pendiente' THEN valor_inicial ELSE 0 END),0) AS vigente_creado, coalesce(sum(CASE WHEN estado = 'Pendiente' THEN recuperado ELSE 0 END),0) AS vigente_recuperado, coalesce(sum(CASE WHEN estado = 'Pendiente' THEN saldo_por_recuperar ELSE 0 END),0) AS vigente_saldo, count(*) FILTER (WHERE estado = 'Pendiente') AS pendientes, count(*) FILTER (WHERE estado = 'Pagada') AS pagadas, coalesce(avg(valor_inicial),0) AS ticket, coalesce(max(valor_inicial),0) AS maxima, count(DISTINCT cliente) AS clientes FROM cartera_informe`,
       datos: `SELECT consecutivo, placa, cliente, fecha_creacion, year(fecha_creacion) AS anio, valor_inicial, recuperado, saldo_por_recuperar, porcentaje_recuperado, estado, antiguedad_dias, rango_antiguedad, creado_por, reportado_por, deudor, cuotas, cuotas_pendientes, motivo FROM cartera_informe ORDER BY fecha_creacion DESC NULLS LAST, consecutivo`,
       cliente: `SELECT cliente, count(*) AS carteras, count(*) FILTER (WHERE estado = 'Pendiente') AS pendientes, sum(CASE WHEN estado='Pendiente' THEN saldo_por_recuperar ELSE 0 END) AS saldo_pendiente, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado, CASE WHEN sum(valor_inicial)=0 THEN 0 ELSE sum(recuperado)/sum(valor_inicial) END AS porcentaje_recuperado FROM cartera_informe GROUP BY cliente ORDER BY saldo_pendiente DESC`,
       estado: `SELECT estado, count(*) AS carteras, sum(valor_inicial) AS creado, sum(recuperado) AS recuperado, sum(saldo_por_recuperar) AS saldo, CASE WHEN sum(valor_inicial)=0 THEN 0 ELSE sum(recuperado)/sum(valor_inicial) END AS porcentaje_recuperado FROM cartera_informe GROUP BY estado ORDER BY CASE estado WHEN 'Pendiente' THEN 1 WHEN 'Pagada' THEN 2 ELSE 3 END`,
@@ -591,15 +595,15 @@
         ['INFORME DE CARTERAS - TECLOGI', ''], ['Resumen ejecutivo. Todos los valores en pesos colombianos (COP).', ''], ['Fecha de corte del informe', new Date()], ['Registros en la base', value(r,'registros')], ['Duplicados descartados', state.duplicates], ['INDICADOR', 'VALOR'],
         ['Cartera total creada', value(r,'creado')], ['Total recuperado', value(r,'recuperado')], ['Saldo pendiente por recuperar', value(r,'saldo')], ['% de recuperacion global', value(r,'creado') ? value(r,'recuperado') / value(r,'creado') : 0], [],
         ['Carteras VIGENTES (pendientes)', value(r,'pendientes')], ['Valor creado (vigentes)', value(r,'vigente_creado')], ['Valor recuperado (vigentes)', value(r,'vigente_recuperado')], ['SALDO EN RIESGO (vigentes)', value(r,'vigente_saldo')], ['% recuperacion (vigentes)', value(r,'vigente_creado') ? value(r,'vigente_recuperado') / value(r,'vigente_creado') : 0], [],
-        ['Carteras PAGADAS', value(r,'pagadas')], ['Carteras ANULADAS', value(r,'anuladas')], ['Valor anulado (no recuperable)', value(r,'anulado')], [], ['Ticket promedio por cartera', value(r,'ticket')], ['Cartera mas alta registrada', value(r,'maxima')], ['Clientes distintos', value(r,'clientes')], [],
-        ['Notas metodologicas', ''], ['Saldo por recuperar = Valor inicial - Valor recuperado.', ''], ['Pendiente: state.description diferente de paid o deleted. Pagada: paid. Anulada: deleted.', ''], ['Las carteras anuladas se conservan para trazabilidad.', ''], ['Cuotas y Cuotas pendientes se toman de installments y pendingInstallments.', ''], ['Si una cartera (mismo id) aparece varias veces, se conserva la del archivo modificado mas recientemente.', '']
+        ['Carteras PAGADAS', value(r,'pagadas')], ['Carteras eliminadas (excluidas del informe)', state.deleted], ['Carteras con otro estado (excluidas)', state.other], [], ['Ticket promedio por cartera', value(r,'ticket')], ['Cartera mas alta registrada', value(r,'maxima')], ['Clientes distintos', value(r,'clientes')], [],
+        ['Notas metodologicas', ''], ['Saldo por recuperar = Valor inicial - Valor recuperado.', ''], ['Pendiente: state.description = pending. Pagada: paid (comparacion exacta, igual que TecLogi).', ''], ['Las carteras eliminadas (deleted) y las de cualquier otro estado no se incluyen en ningun calculo ni hoja.', ''], ['Cuotas y Cuotas pendientes se toman de installments y pendingInstallments.', ''], ['Si una cartera (mismo id) aparece varias veces, se conserva la del archivo modificado mas recientemente.', '']
       ];
       const sheet = XLSX.utils.aoa_to_sheet(summary);
       sheet['!cols'] = [{ wch: 45 }, { wch: 25 }];
       sheet['A1'].s = { fill:{fgColor:{rgb:'0B6B51'}}, font:{bold:true,color:{rgb:'FFFFFF'},sz:15} }; sheet['A6'].s = sheet['B6'].s = { fill:{fgColor:{rgb:'0B6B51'}}, font:{bold:true,color:{rgb:'FFFFFF'}} };
       for (const cellRef of ['B3']) if (sheet[cellRef]) sheet[cellRef].z='dd/mm/yyyy';
-      for (const row of [7,8,9,12,13,14,19,22,23]) { const cell=sheet[`B${row}`]; if(cell) cell.z='$#,##0'; }
-      for (const row of [10,15]) { const cell=sheet[`B${row}`]; if(cell) cell.z='0.0%'; }
+      for (const row of [7,8,9,13,14,15,22,23]) { const cell=sheet[`B${row}`]; if(cell) cell.z='$#,##0'; }
+      for (const row of [10,16]) { const cell=sheet[`B${row}`]; if(cell) cell.z='0.0%'; }
       XLSX.utils.book_append_sheet(wb, sheet, 'Resumen');
       createSheet(wb, 'Datos', ['Consecutivo','Placa','Cliente','Fecha creacion','Ano','Valor inicial (COP)','Recuperado (COP)','Saldo por recuperar (COP)','% Recuperado','Estado','Antiguedad (dias)','Rango antiguedad','Creado por','Reportado por','Deudor','Cuotas','Cuotas pendientes','Motivo'], rowsToArray(result.datos, [['consecutivo'],['placa'],['cliente'],['fecha_creacion', excelDate],['anio'],['valor_inicial'],['recuperado'],['saldo_por_recuperar'],['porcentaje_recuperado'],['estado'],['antiguedad_dias'],['rango_antiguedad'],['creado_por'],['reportado_por'],['deudor'],['cuotas'],['cuotas_pendientes'],['motivo']]), {dateCols:[3],moneyCols:[5,6,7],percentCols:[8],integerCols:[4,10,15,16],widths:[12,12,32,14,9,18,18,22,14,14,17,18,24,24,18,10,18,46]});
       createSheet(wb, 'PorCliente', ['Cliente','Carteras','Pendientes','Saldo pendiente (COP)','Valor creado (COP)','Recuperado (COP)','% recuperado'], rowsToArray(result.cliente, [['cliente'],['carteras'],['pendientes'],['saldo_pendiente'],['creado'],['recuperado'],['porcentaje_recuperado']]), {integerCols:[1,2],moneyCols:[3,4,5],percentCols:[6],widths:[35,12,13,22,21,20,16]});
@@ -617,7 +621,7 @@
       try {
         await registerFiles(); stage('load',['engine']); status('Normalizando campos de cartera');
         await createNormalizedTable(); stage('normalize',['engine','load']);
-        const count = await queryRows('SELECT (SELECT count(*) FROM cartera_informe) AS total, (SELECT count(*) FROM cartera_raw) - (SELECT count(*) FROM cartera_informe) AS duplicados'); state.rows = Number(value(count[0], 'total')); state.duplicates = Number(value(count[0], 'duplicados'));
+        const count = await queryRows(`SELECT (SELECT count(*) FROM cartera_informe) AS total, (SELECT count(*) FROM cartera_raw) - (SELECT count(*) FROM cartera) AS duplicados, (SELECT count(*) FROM cartera WHERE estado = 'Eliminada') AS eliminadas, (SELECT count(*) FROM cartera WHERE estado = 'Otro') AS otros`); state.rows = Number(value(count[0], 'total')); state.duplicates = Number(value(count[0], 'duplicados')); state.deleted = Number(value(count[0], 'eliminadas')); state.other = Number(value(count[0], 'otros'));
         if (!state.rows) throw new Error('No se encontraron registros de cartera en los archivos seleccionados.');
         if (state.rows > 1048575) throw new Error('El libro XLSX admite hasta 1.048.575 registros en la hoja Datos. Divide la exportación en varios archivos.');
         status('Calculando indicadores con SQL', `${integer.format(state.rows)} registros`); await yieldFrame();
@@ -630,7 +634,7 @@
     }
     function renderResults(summary) {
       const created=value(summary,'creado')||0, recovered=value(summary,'recuperado')||0, outstanding=value(summary,'vigente_saldo')||0;
-      el.report_copy.textContent = `${integer.format(state.rows)} registros consolidados desde ${state.files.length} archivo${state.files.length === 1 ? '' : 's'}.${state.duplicates ? ` Se descartaron ${integer.format(state.duplicates)} duplicado${state.duplicates === 1 ? '' : 's'}.` : ''}`;
+      el.report_copy.textContent = `${integer.format(state.rows)} registros consolidados desde ${state.files.length} archivo${state.files.length === 1 ? '' : 's'}.${state.duplicates ? ` Se descartaron ${integer.format(state.duplicates)} duplicado${state.duplicates === 1 ? '' : 's'}.` : ''}${state.deleted ? ` Se excluyeron ${integer.format(state.deleted)} cartera${state.deleted === 1 ? '' : 's'} eliminada${state.deleted === 1 ? '' : 's'}.` : ''}${state.other ? ` Se excluyeron ${integer.format(state.other)} con estado distinto de pending o paid.` : ''}`;
       el.metrics.innerHTML = [ ['Cartera creada',money.format(created),'creado'], ['Recuperado',money.format(recovered),'recuperado'], ['Saldo en riesgo',money.format(outstanding),'saldo'], ['Recuperacion global',`${((created ? recovered / created : 0) * 100).toFixed(1)}%`,'pct'], ['Clientes distintos',integer.format(Number(value(summary,'clientes')||0)),'clientes'], ['Carteras pendientes',integer.format(Number(value(summary,'pendientes')||0)),'pendientes'] ].map(([label, val, origin]) => `<div class="metric"><div class="metric-top"><span class="metric-label">${label}</span><button class="why" type="button" data-lineage="pantalla/${origin}" aria-label="¿De dónde sale ${label}?" title="¿De dónde sale este dato?">?</button></div><span class="metric-value">${val}</span></div>`).join('');
     }
 
